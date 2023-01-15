@@ -1,10 +1,10 @@
 import com.google.common.collect.Lists;
-import com.selenium.browser.configuration.impls.ChromeConfiguration;
-import com.selenium.browser.factory.impls.SeleniumBrowserFactory;
-import com.selenium.element.impls.ElementByXpath;
-import com.selenium.enums.BrowserType;
-import com.selenium.utils.tools.Tools;
-import com.selenium.utils.xpath.Xpath;
+import io.smart.browser.configuration.impls.ChromeConfiguration;
+import io.smart.browser.factory.impls.SeleniumBrowserFactory;
+import io.smart.element.impls.ElementByXpath;
+import io.smart.enums.BrowserType;
+import io.smart.utils.tools.Tools;
+import io.smart.utils.xpath.Xpath;
 import org.openqa.selenium.chrome.ChromeOptions;
 
 import java.time.Duration;
