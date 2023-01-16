@@ -3,15 +3,7 @@ package io.smart.utils.tools;
 import java.awt.*;
 import java.util.ArrayList;
 
-/**
- * Java Code to get a color name from rgb/hex value/awt color
- *
- * The part of looking up a color name from the rgb values is edited from
- * https://gist.github.com/nightlark/6482130#file-gistfile1-java (that has some errors) by Ryan Mast (nightlark)
- *
- * @author Xiaoxiao Li
- *
- */
+
 public class ColorUtils {
 
     /**
@@ -164,19 +156,14 @@ public class ColorUtils {
 
     /**
      * Get the closest color name from our list
-     *
-     * @param r
-     * @param g
-     * @param b
-     * @return
      */
-    public static String getColorNameFromRgb(int r, int g, int b) {
+    public static String getColorNameFromRgb(int red, int green, int blue) {
         ArrayList<ColorName> colorList = initColorList();
         ColorName closestMatch = null;
         int minMSE = Integer.MAX_VALUE;
         int mse;
         for (ColorName c : colorList) {
-            mse = c.computeMSE(r, g, b);
+            mse = c.computeMSE(red, green, blue);
             if (mse < minMSE) {
                 minMSE = mse;
                 closestMatch = c;
@@ -190,19 +177,10 @@ public class ColorUtils {
         }
     }
 
-    /**
-     * Convert hexColor to rgb, then call getColorNameFromRgb(r, g, b)
-     *
-     * @param hexColor
-     * @return
-     */
     public static String getColorNameFromHex(int hexColor) {
         int r = (hexColor & 0xFF0000) >> 16;
         int g = (hexColor & 0xFF00) >> 8;
         int b = (hexColor & 0xFF);
-        System.out.println(r);
-        System.out.println(g);
-        System.out.println(b);
         return getColorNameFromRgb(r, g, b);
     }
 
@@ -216,12 +194,6 @@ public class ColorUtils {
                 color.getBlue());
     }
 
-    /**
-     * SubClass of ColorUtils. In order to lookup color name
-     *
-     * @author Xiaoxiao Li
-     *
-     */
     public static class ColorName {
         public int r, g, b;
         public String name;
@@ -253,11 +225,5 @@ public class ColorUtils {
         public String getName() {
             return name;
         }
-    }
-
-    public static void main(String[] args) {
-        ColorUtils colorUtils=new ColorUtils();
-        String ff=colorUtils.getColorNameFromHex(0xdc2d37);
-        System.out.println(ff);
     }
 }
