@@ -80,6 +80,20 @@ public class ChromeBrowser extends Browser {
         if (!Objects.isNull(conf.getDesiredCapabilities())) {
             conf.getDesiredCapabilities().setCapability(ChromeOptions.CAPABILITY, options);
         }
+        if (!Objects.isNull(conf.getExperimentalOption())) {
+            conf.getExperimentalOption().forEach(options::setExperimentalOption);
+        }
+        if (!Objects.isNull(conf.getDownloadDirectory())) {
+            if (!Objects.isNull(conf.getExperimentalOption()) && conf.getExperimentalOption().containsKey("prefs")) {
+                Map<String, Object> prefs = (Map) conf.getExperimentalOption().get("prefs");
+                prefs.put("download.default_directory", conf.getDownloadDirectory());
+                options.setExperimentalOption("prefs", conf.getExperimentalOption().get("prefs"));
+            } else {
+                Map<String, Object> prefs = new HashMap<>();
+                prefs.put("download.default_directory", conf.getDownloadDirectory());
+                options.setExperimentalOption("prefs", prefs);
+            }
+        }
         ChromeDriver driver;
         if (!Objects.isNull(conf.getChromeDriverService())) {
             driver = new ChromeDriver(conf.getChromeDriverService(), options);

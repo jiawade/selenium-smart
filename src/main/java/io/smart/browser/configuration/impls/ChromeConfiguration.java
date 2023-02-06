@@ -9,6 +9,8 @@ import lombok.experimental.SuperBuilder;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
 
+import java.util.Map;
+
 @ToString
 @SuperBuilder
 @Getter
@@ -18,5 +20,9 @@ public class ChromeConfiguration extends DefaultConfiguration implements Configu
     public ChromeOptions chromeOptions;
 
     public ChromeDriverService chromeDriverService;
+
+    public Map<String, Object> experimentalOption;
+
+    public String downloadDirectory;
 
 }

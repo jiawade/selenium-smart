@@ -9,6 +9,8 @@ import lombok.experimental.SuperBuilder;
 import org.openqa.selenium.edge.EdgeDriverService;
 import org.openqa.selenium.edge.EdgeOptions;
 
+import java.util.Map;
+
 @ToString
 @SuperBuilder
 @Getter
@@ -18,4 +20,8 @@ public class EdgeConfiguration extends DefaultConfiguration implements Configura
     public EdgeOptions edgeOptions;
 
     EdgeDriverService edgeDriverService;
+
+    public Map<String, Object> experimentalOption;
+
+    public String downloadDirectory;
 }

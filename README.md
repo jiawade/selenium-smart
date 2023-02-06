@@ -2,7 +2,7 @@
 # selenium-smart #
 
 selenium-smart is an encapsulation of selenium
-based on Java8 and selenium(4.7.2)
+based on Java8 and selenium(4.7.2.2)
 
 ## Installation
 

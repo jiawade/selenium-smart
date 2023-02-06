@@ -12,6 +12,8 @@ import org.openqa.selenium.edge.EdgeOptions;
 
 import java.io.File;
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 @Slf4j
@@ -76,6 +78,20 @@ public class EdgeBrowser extends Browser {
         }
         if (!Objects.isNull(conf.getDesiredCapabilities())) {
             conf.getDesiredCapabilities().setCapability(ChromeOptions.CAPABILITY, options);
+        }
+        if (!Objects.isNull(conf.getExperimentalOption())) {
+            conf.getExperimentalOption().forEach(options::setExperimentalOption);
+        }
+        if (!Objects.isNull(conf.getExperimentalOption()) && conf.getExperimentalOption().containsKey("prefs")) {
+            if (conf.getExperimentalOption().containsKey("prefs")) {
+                Map<String, Object> prefs = (Map) conf.getExperimentalOption().get("prefs");
+                prefs.put("download.default_directory", conf.getDownloadDirectory());
+                options.setExperimentalOption("prefs", conf.getExperimentalOption().get("prefs"));
+            } else {
+                Map<String, Object> prefs = new HashMap<>();
+                prefs.put("download.default_directory", conf.getDownloadDirectory());
+                options.setExperimentalOption("prefs", prefs);
+            }
         }
         EdgeDriver driver;
         if (!Objects.isNull(conf.getEdgeDriverService())) {

@@ -7,7 +7,9 @@ import io.smart.utils.tools.Tools;
 import io.smart.utils.xpath.Xpath;
 import org.openqa.selenium.chrome.ChromeOptions;
 
+import java.io.File;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -30,14 +32,19 @@ public class Examples {
     private static ChromeConfiguration buildChromeConf() {
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--no-sandbox", "--disable-extensions", "--disable-dev-shm-usage");
-        options.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
-        Map<String, Boolean> infoBar = Lists.newArrayList("profile.password_manager_enabled", "credentials_enable_service").stream().collect(Collectors.toMap(i -> i, i -> false));
-        options.setExperimentalOption("prefs", infoBar);
+        Map<String, Object> eOptions = new HashMap<>();
+        Map<String, Object> infoBar = new HashMap<>();
+        infoBar.put("profile.password_manager_enabled", false);
+        infoBar.put("credentials_enable_service", false);
+        eOptions.put("excludeSwitches", new String[]{"enable-automation"});
+        eOptions.put("prefs", infoBar);
         return ChromeConfiguration.builder()
                 .chromeOptions(options)
                 .width(1920)
                 .hight(1080)
                 .duration(Duration.ofSeconds(60))
+                .experimentalOption(eOptions)
+                .downloadDirectory(System.getProperty("user.dir") + File.separator + "target" + File.separator + "downloads")
                 .build();
     }
 
