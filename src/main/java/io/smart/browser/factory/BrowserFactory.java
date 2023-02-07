@@ -12,6 +12,7 @@ import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,9 +22,10 @@ public interface BrowserFactory {
     @Getter
     @Slf4j
     class Websocket {
-        public Map<String, List<String>> sendData = Collections.synchronizedMap(new HashMap<>());
-        public Map<String, List<String>> receiveData = Collections.synchronizedMap(new HashMap<>());
+        private Map<String, List<String>> sendData = Collections.synchronizedMap(new HashMap<>());
+        private Map<String, List<String>> receiveData = Collections.synchronizedMap(new HashMap<>());
         private DevTools devTools;
+        private AtomicBoolean atomicBoolean = new AtomicBoolean(false);
 
 
         public Websocket(@NonNull WebDriver driver) {
@@ -82,6 +84,19 @@ public interface BrowserFactory {
             return this;
         }
 
+        public Websocket waitFlag(String topic, String flag) {
+            while (!atomicBoolean.get()) {
+                if (this.getReceiveData().containsKey(topic)) {
+                    Map<String, List<String>> temp = this.getReceiveData();
+                    temp.get(topic).forEach(i -> {
+                        if (i.contains(flag)) {
+                            atomicBoolean = new AtomicBoolean(true);
+                        }
+                    });
+                }
+            }
+            return this;
+        }
     }
 
 }
