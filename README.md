@@ -2,7 +2,7 @@
 # selenium-smart #
 
 selenium-smart is an encapsulation of selenium
-based on Java8 and selenium(4.7.2.3)
+based on Java8 and selenium(4.7.2)
 
 ## Installation
 
@@ -11,7 +11,7 @@ based on Java8 and selenium(4.7.2.3)
 <dependency>
   <groupId>io.github.jiawade</groupId>
   <artifactId>selenium-smart</artifactId>
-  <version>4.7.2</version>
+  <version>4.7.2.4</version>
 </dependency>
 ````
 

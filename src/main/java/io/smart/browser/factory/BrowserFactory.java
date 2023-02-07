@@ -1,6 +1,7 @@
 package io.smart.browser.factory;
 
 import com.google.common.collect.Lists;
+import io.smart.utils.tools.Tools;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -86,17 +87,20 @@ public interface BrowserFactory {
 
         public Websocket waitFlag(String topic, String flag) {
             while (!atomicBoolean.get()) {
-                if (this.getReceiveData().containsKey(topic)) {
-                    Map<String, List<String>> temp = this.getReceiveData();
+                Map<String, List<String>> temp = this.getReceiveData();
+                if (temp.containsKey(topic)) {
                     temp.get(topic).forEach(i -> {
                         if (i.contains(flag)) {
                             atomicBoolean = new AtomicBoolean(true);
                         }
                     });
                 }
+                Tools.sleep(500);
             }
             return this;
         }
+
+
     }
 
 }
