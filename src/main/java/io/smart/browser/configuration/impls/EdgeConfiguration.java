@@ -24,4 +24,12 @@ public class EdgeConfiguration extends DefaultConfiguration implements Configura
     public Map<String, Object> experimentalOption;
 
     public String downloadDirectory;
+
+    public boolean noSandbox;
+
+    public boolean disableGpu;
+
+    public boolean disableExtensions;
+
+    public boolean disableDevShmUsage;
 }

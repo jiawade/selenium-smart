@@ -11,7 +11,7 @@ based on Java8 and selenium(4.7.2)
 <dependency>
   <groupId>io.github.jiawade</groupId>
   <artifactId>selenium-smart</artifactId>
-  <version>4.7.2.4</version>
+  <version>4.8.0.2</version>
 </dependency>
 ````
 

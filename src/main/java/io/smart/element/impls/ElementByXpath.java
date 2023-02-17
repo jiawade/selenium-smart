@@ -4,10 +4,10 @@ import io.smart.driver.DriverOperation;
 import io.smart.element.PortalOperator;
 import io.smart.enums.Direction;
 import io.smart.enums.Position;
+import io.smart.function.Operator;
 import io.smart.utils.tools.ColorUtils;
 import io.smart.utils.tools.Tools;
 import io.smart.utils.xpath.XpathBuilder;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Actions;
@@ -33,27 +33,33 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         super(driver);
     }
 
-    @Override
+
     public void click(String text) {
         String value = XpathBuilder.xpathGenerator(text);
         executeClick(value);
     }
 
-    @Override
+
+    public void click(String text, Operator before, Operator after) {
+        String value = XpathBuilder.xpathGenerator(text);
+        executeClick(value, before, after);
+    }
+
+
     public void click(String text, String index) {
         String value = XpathBuilder.xpathGenerator(text, index);
         executeClick(value);
     }
 
-    @Override
+
     public void click(String text, int secondTimeout) {
         String value = XpathBuilder.xpathGenerator(text);
         executeClick(value, secondTimeout);
     }
 
-    @Override
+
     public void click(WebElement element) {
-        log.info("clicking element: {}", getElementXPath(element));
+        log.info("clicking element: {}", element);
         try {
             element.click();
         } catch (WebDriverException e) {
@@ -64,7 +70,7 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         }
     }
 
-    @Override
+
     public void click(By by) {
         if (isElementClickable(by)) {
             try {
@@ -80,123 +86,111 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         }
     }
 
-    @Override
+
     public void click(int width, int height) {
-        log.info("clicking coordinate: ({}, {})", nextXPoint, nextYpoint);
+        log.info("clicking coordinate: ({}, {})", width, height);
         action(width, height).moveByOffset(nextXPoint, nextYpoint).click().build().perform();
     }
 
-    @Override
-    public void click(int width, int height, String precondition) {
-        log.info("clicking coordinate: ({}, {})", width, height);
-        isElementExist(precondition);
-        click(width, height);
+    public void click(int width, int height, String description) {
+        log.info("clicking element: \"{}\" by coordinate: ({}, {})", description, width, height);
+        action(width, height).moveByOffset(nextXPoint, nextYpoint).click().build().perform();
     }
 
-    @Override
-    public void click(int width, int height, String precondition, String expectation) {
+
+    public void click(int width, int height, Operator before, Operator after) {
         log.info("clicking coordinate: ({}, {})", width, height);
-        isElementExistContain(precondition);
+        before.apply();
         click(width, height);
-        if (isElementExistContain(expectation)) {
-            throw new WebDriverException("after clicking " + precondition + " could not show " + expectation);
-        }
+        after.apply();
     }
 
-    @Override
-    public void clickAny(String text) {
+    public void rightClick() {
+        log.info("right click current point");
+        actions.contextClick().build().perform();
+    }
+
+    public void rightClick(int width, int height) {
+        log.info("right click coordinate: ({}, {})", width, height);
+        action(width, height).moveByOffset(nextXPoint, nextYpoint).contextClick().build().perform();
+    }
+
+    public void rightClick(int width, int height, String description) {
+        log.info("right click element: \"{}\" by coordinate: ({}, {})", description, width, height);
+        action(width, height).moveByOffset(nextXPoint, nextYpoint).contextClick().build().perform();
+    }
+
+    public void rightClick(String text) {
         String value = XpathBuilder.xpathGenerator(text);
-        log.info("clicking element: {}", value);
-        if (isElementExist(value)) {
-            Point location = findElement(value).getLocation();
-            click(location.getX(), location.getY());
-        } else {
-            throw new WebDriverException("the element does not show on portal");
-        }
+        Point location = findElement(value).getLocation();
+        log.info("right click element: {}", value);
+        action(location.getX(), location.getY()).moveToElement(findElement(value)).contextClick().build().perform();
     }
 
-    @Override
+    public void rightClick(WebElement element) {
+        int xPoint = element.getLocation().getX();
+        int yPoint = element.getLocation().getY();
+        log.info("right click coordinate: ({}, {})", xPoint, yPoint);
+        action(xPoint, yPoint).moveToElement(element).contextClick().build().perform();
+    }
+
     public void clickContain(String text) {
         String value = XpathBuilder.xpathContainsGenerator(text);
         executeClick(value);
     }
 
-    @Override
+
     public void clickContain(String text, int secondTimeout) {
         String value = XpathBuilder.xpathContainsGenerator(text);
         executeClick(value, secondTimeout);
     }
 
-    @Override
+
     public void jsClick(String xpath) {
         log.info("clicking element: {} by js", xpath);
         js.executeScript("arguments[0].click();", driver.findElement(By.xpath(XpathBuilder.xpathGenerator(xpath))));
     }
 
-    @Override
+
     public void jsClick(WebElement element) {
         log.info("clicking element: {} by js", getElementXPath(element));
         js.executeScript("arguments[0].click();", element);
     }
 
-    @Override
+    public void forceClick(String text) {
+        String value = XpathBuilder.xpathGenerator(text);
+        log.info("clicking element: {}", value);
+        Point location = findElement(value).getLocation();
+        click(location.getX(), location.getY());
+    }
+
+    public void forceClick(WebElement element) {
+        log.info("clicking element: {}", element);
+        Point location = element.getLocation();
+        click(location.getX(), location.getY());
+    }
+
     public String getText(String text) {
         log.info("getting text by xpath: {}", text);
+        isElementExist(text);
         String value = XpathBuilder.xpathGenerator(text);
-        String temtext = "";
-        for (int i = 0; i < secondTimeOut * 1000 / interval; i++) {
-            try {
-                String getText = driver.findElement(By.xpath(value)).getText();
-                if (!"".equals(getText) && getText != null) {
-                    temtext = getText;
-                    break;
-                } else {
-                    Tools.sleep(interval);
-                }
-            } catch (WebDriverException ignore) {
-            }
-        }
-        return temtext;
+        return driver.findElement(By.xpath(value)).getText();
     }
 
-    @Override
+
     public String getText(String text, int secondTimeout) {
         log.info("getting text by xpath: {}", text);
+        isElementExist(text, secondTimeout);
         String value = XpathBuilder.xpathGenerator(text);
-        String temtext = "";
-        for (int i = 0; i < secondTimeout * 1000 / interval; i++) {
-            try {
-                String getText = driver.findElement(By.xpath(value)).getText();
-                if (!"".equals(getText) && getText != null) {
-                    temtext = getText;
-                    break;
-                } else {
-                    Tools.sleep(interval);
-                }
-            } catch (WebDriverException ignore) {
-            }
-        }
-        return temtext;
+        return driver.findElement(By.xpath(value)).getText();
     }
 
-    @Override
+
     public String getText(WebElement element) {
-        String text = null;
-        for (int i = 0; i < secondTimeOut * 1000 / interval; i++) {
-            try {
-                Tools.sleep(interval);
-                String getText = element.getText();
-                if (getText != null) {
-                    text = getText;
-                    break;
-                }
-            } catch (WebDriverException ignore) {
-            }
-        }
-        return text;
+        return element.getText();
     }
 
-    @Override
+
     public List<String> getTexts(String text) {
         List<WebElement> webElements = findElements(text);
         List<String> texts = new LinkedList<>();
@@ -210,7 +204,19 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         return texts;
     }
 
-    @Override
+    public List<String> getTexts(List<WebElement> elements) {
+        List<String> texts = new LinkedList<>();
+        elements.forEach(i -> {
+            try {
+                texts.add(i.getText());
+            } catch (WebDriverException e) {
+                log.debug(e.toString(), e);
+            }
+        });
+        return texts;
+    }
+
+
     public List<String> getTexts(String text, int secondTimeOut) {
         List<WebElement> webElements = findElements(text, secondTimeOut);
         List<String> texts = new LinkedList<>();
@@ -224,7 +230,6 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         return texts;
     }
 
-    @Override
     public void clickXYBesidesText(int pixel, Direction direction, String xpath) {
         List<WebElement> element = findElements(xpath);
         if (element.size() > 1) {
@@ -250,7 +255,7 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         action.click().build().perform();
     }
 
-    @Override
+
     public void input(String xpath, String text) {
         log.info("inputing: {}", text);
         String value = XpathBuilder.xpathGenerator(xpath);
@@ -259,7 +264,7 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         }
     }
 
-    @Override
+
     public void input(WebElement element, String text) {
         log.info("inputing: {}", text);
         for (char i : text.toCharArray()) {
@@ -267,21 +272,21 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         }
     }
 
-    @Override
+
     public void input(String xpath, Keys keys) {
         log.info("pressing keyboard: {}", keys.toString());
         String value = XpathBuilder.xpathGenerator(xpath);
         findElement(value).sendKeys(keys);
     }
 
-    @Override
+
     public void uploadFile(String xpath, File file) {
         log.info("uploading file: {}", file.getAbsolutePath());
         String value = XpathBuilder.xpathGenerator(xpath);
         findElement(value).sendKeys(file.getAbsolutePath());
     }
 
-    @Override
+
     public void clearInputBox(String text) {
         findElement(text).sendKeys(Keys.CONTROL + "a");
         findElement(text).sendKeys(Keys.BACK_SPACE);
@@ -289,7 +294,7 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         findElement(text).clear();
     }
 
-    @Override
+
     public void clearInputBox(WebElement element) {
         element.sendKeys(Keys.CONTROL + "a");
         element.sendKeys(Keys.BACK_SPACE);
@@ -297,65 +302,71 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         element.clear();
     }
 
-    @Override
+
     public void pressKey(String text, Keys keys) {
         log.info("pressing keyboard: " + keys.getCodePoint());
         action(findElement(text)).moveByOffset(nextXPoint, nextYpoint).sendKeys(keys).build().perform();
     }
 
-    @Override
+
     public WebElement findElement(String text) {
         String value = XpathBuilder.xpathGenerator(text);
         return executeFindElement(value);
     }
 
-    @Override
+
     public WebElement findElement(String text, String index) {
         String value = XpathBuilder.xpathGenerator(text, index);
         return executeFindElement(value);
     }
 
-    @Override
+
     public WebElement findElement(String text, int secondTimeout) {
         String value = XpathBuilder.xpathGenerator(text);
         return executeFindElement(value, secondTimeout);
     }
 
-    @Override
+
     public WebElement findElement(String text, String index, int secondTimeout) {
         String value = XpathBuilder.xpathGenerator(text, index);
         return executeFindElement(value, secondTimeout);
     }
 
-    @Override
+
     public WebElement findElementContains(String text, int secondTimeout) {
         String value = XpathBuilder.xpathContainsGenerator(text);
         return executeFindElement(value, secondTimeout);
     }
 
-    @Override
+
     public WebElement findElementContains(String text) {
         String value = XpathBuilder.xpathContainsGenerator(text);
         return executeFindElement(value);
     }
 
-    @Override
+
     public List<WebElement> findElements(String text) {
         String value = XpathBuilder.xpathGenerator(text);
         return executeFindElements(value);
     }
 
-    @Override
+
+    public List<WebElement> findElements(String text, String index, int secondTimeout) {
+        String value = XpathBuilder.xpathGenerator(text, index);
+        return executeFindElements(value, secondTimeout);
+    }
+
+
     public List<WebElement> findElements(String text, int secondTimeout) {
         String value = XpathBuilder.xpathGenerator(text);
         return executeFindElements(value, secondTimeout);
     }
 
-    @Override
+
     public void waitElementDisappear(String element) {
         String value = XpathBuilder.xpathGenerator(element);
         boolean ele;
-        for (int i = 1; i <= secondTimeOut * 1000 / interval; i++) {
+        for (int i = 1; i <= secondTimeout * 1000 / interval; i++) {
             ele = isElementClickable(value, 1);
             if (!ele) {
                 break;
@@ -364,13 +375,12 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         }
     }
 
-    @Override
 
     public Object getElementCssValue(String text, String attribute) {
         return findElement(text).getCssValue(attribute);
     }
 
-    @Override
+
     public WebElement findEditableInputBox(String xpath) {
         WebElement ele = null;
         List<WebElement> allEle = findElements(xpath);
@@ -393,7 +403,7 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         return ele;
     }
 
-    @Override
+
     public WebElement findClickableElement(String xpath) {
         WebElement ele = null;
         List<WebElement> allEle = findElements(xpath);
@@ -409,7 +419,7 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         return ele;
     }
 
-    @Override
+
     public WebElement findClickableElement(String xpath, int millisTimeOut) {
         WebElement ele = null;
         List<WebElement> allEle = findElements(xpath);
@@ -426,76 +436,59 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         return ele;
     }
 
-    @Override
+
     public List<WebElement> findClickableElements(String xpath) {
-        List<WebElement> ele = new LinkedList<>();
-        List<WebElement> allEle = findElements(xpath);
-        for (WebElement i : allEle) {
+        List<WebElement> clickableElements = new LinkedList<>();
+        List<WebElement> elements = findElements(xpath);
+        for (WebElement i : elements) {
             if (isElementClickable(i, 30)) {
-                ele.add(i);
+                clickableElements.add(i);
             }
         }
-        return ele;
+        return clickableElements;
     }
 
-    @Override
-    public void hover(Position position) {
-        log.info("hovering to: {}", position);
-        Dimension location = driver.findElement(By.tagName("body")).getSize();
-        int width = location.width;
-        int height = location.height;
-        switch (position) {
-            case LETF_TOP:
-                toInitialPoint();
-                actions.moveByOffset(0, 0).build().perform();
-                break;
-            case LEFT_BUTTON:
-                toInitialPoint();
-                actions.moveByOffset(0, height).build().perform();
-                break;
-            case RIGHT_TOP:
-                toInitialPoint();
-                actions.moveByOffset(width, 0).build().perform();
-                break;
-            case RIGHT_BUTTON:
-                toInitialPoint();
-                actions.moveByOffset(width, height).build().perform();
-                break;
-            case LEFT_CENTER:
-                toInitialPoint();
-                actions.moveByOffset(0, height / 2).build().perform();
-                break;
-            case RIGHT_CENTER:
-                toInitialPoint();
-                actions.moveByOffset(width, height / 2).build().perform();
-                break;
-            case TOP_CENTER:
-                toInitialPoint();
-                actions.moveByOffset(width / 2, 0).build().perform();
-                break;
-            case BUTTON_CENTER:
-                toInitialPoint();
-                actions.moveByOffset(width / 2, height).build().perform();
-                break;
-        }
+    public void dragElementTo(String source, String target) {
+        WebElement elementSource = findElement(source);
+        WebElement elementTarget = findElement(target);
+        log.info("dragging element: {} to element: {}", source, target);
+        action(elementSource).dragAndDrop(elementSource, elementTarget).build().perform();
+        log.info("drag done");
     }
 
-    @Override
+    public void dragElementTo(String source, int targetX, int targetY) {
+        WebElement elementSource = findElement(source);
+        log.info("dragging element: {} to : ({},{})", source, targetX, targetY);
+        action(elementSource).dragAndDropBy(elementSource, targetX, targetY).build().perform();
+        log.info("drag done");
+    }
+
+    public void dragElementTo(WebElement source, WebElement target) {
+        log.info("dragging element: {} to element: {}", source, target);
+        action(source).dragAndDrop(source, target).build().perform();
+        log.info("drag done");
+    }
+
+    public void dragElementTo(WebElement source, int targetX, int targetY) {
+        log.info("dragging element: {} to : ({},{})", source, targetX, targetY);
+        action(source).dragAndDropBy(source, targetX, targetY).build().perform();
+        log.info("drag done");
+    }
+
     public void hoverAnElement(WebElement element) {
-        log.info("hovering element: {}", getElementXPath(element));
-        action(element).moveByOffset(nextXPoint, nextYpoint).build().perform();
+        log.info("hovering element: {} by ({},{})", getElementXPath(element), nextXPoint, nextYpoint);
+        action(element).moveToElement(element).build().perform();
     }
 
-    @Override
     public void hoverAnElement(String element) {
         log.info("hovering text: " + element);
         List<WebElement> elements = findElements(element);
         if (elements.size() == 1) {
-            action(elements.get(0)).moveByOffset(nextXPoint, nextYpoint).build().perform();
+            action(elements.get(0)).moveToElement(elements.get(0)).build().perform();
         } else {
             for (WebElement i : elements) {
                 try {
-                    action(i).moveByOffset(nextXPoint, nextYpoint).build().perform();
+                    action(i).moveToElement(i).build().perform();
                 } catch (WebDriverException ignore) {
                     Tools.sleep(2000);
                 }
@@ -504,141 +497,202 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
     }
 
 
-    @Override
     public void hoverAnElement(String element, String index) {
         log.info("hovering text: {}", element);
         isElementClickable(XpathBuilder.xpathGenerator(element, index));
-        action(findElement(element, index)).moveByOffset(nextXPoint, nextYpoint).build().perform();
+        WebElement e = findElement(element, index);
+        action(e).moveToElement(e).build().perform();
     }
 
-    @Override
+
     public void hoverAnElement(int x, int y) {
         log.info("hovering to coordinate to: {}, {}", x, y);
-        action(x, y).moveByOffset(nextXPoint, nextYpoint).build().perform();
+        action(x, y).moveByOffset(x, y).build().perform();
     }
 
-    @Override
+    public void hoverAnElement(Position position) {
+        log.info("hovering to: {}", position);
+        Dimension location = driver.findElement(By.tagName("body")).getSize();
+        int width = location.width;
+        int height = location.height;
+        switch (position) {
+            case LETF_TOP:
+                action(0, 0).moveByOffset(nextXPoint, nextYpoint).build().perform();
+                break;
+            case LEFT_BOTTOM:
+                action(0, height).moveByOffset(nextXPoint, nextYpoint).build().perform();
+                break;
+            case RIGHT_TOP:
+                action(width, 0).moveByOffset(nextXPoint, nextYpoint).build().perform();
+                break;
+            case RIGHT_BOTTOM:
+                action(width, height).moveByOffset(nextXPoint, nextYpoint).build().perform();
+                break;
+            case LEFT_CENTER:
+                action(0, height / 2).moveByOffset(nextXPoint, nextYpoint).build().perform();
+                break;
+            case RIGHT_CENTER:
+                action(width, height / 2).moveByOffset(nextXPoint, nextYpoint).build().perform();
+                break;
+            case TOP_CENTER:
+                action(width / 2, 0).moveByOffset(nextXPoint, nextYpoint).build().perform();
+                break;
+            case BUTTON_CENTER:
+                action(width / 2, height).moveByOffset(nextXPoint, nextYpoint).build().perform();
+                break;
+            case CENTER:
+                action(width / 2, height / 2).moveByOffset(nextXPoint, nextYpoint).build().perform();
+                break;
+        }
+    }
+
+
     public void scrollToTop() {
         JavascriptExecutor js = (JavascriptExecutor) driver;
         js.executeScript("window.scrollTo(0,0)");
     }
 
-    @Override
+
     public void scrollToBottom() {
         JavascriptExecutor js = (JavascriptExecutor) driver;
         js.executeScript("window.scrollTo(0,document.body.scrollHeight)");
     }
 
-    @Override
+
     public void scrollToLeft() {
         js.executeScript("window.scroll(-500000, 0)");
     }
 
-    @Override
+
     public void scrollToRight() {
         js.executeScript("window.scroll(500000, 0)");
     }
 
-    @Override
+
     public void scrollToElement(String text) {
         js.executeScript("arguments[0].scrollIntoView(true);", findElement(text));
     }
 
-    @Override
+
     public boolean isElementExist(String text) {
-        boolean flag = false;
+        Duration duration = driver.manage().timeouts().getImplicitWaitTimeout();
         String value = XpathBuilder.xpathGenerator(text);
-        log.info("checking presence of the element: {}", value);
-        for (int i = 0; i < secondTimeOut * 1000 / interval; i++) {
-            try {
-                WebElement ele = driver.findElement(By.xpath(value));
-                highlightElement(ele);
-                flag = true;
-                break;
-            } catch (WebDriverException e) {
-                Tools.sleep(interval);
+        log.info("waiting for element: \"{}\" to appear within {} seconds", value, secondTimeout);
+        boolean wasInterrupted = false;
+        final long finishAtMillis = System.currentTimeMillis() + (secondTimeout * 1000L);
+        try {
+            while (!elementLoaded(value)) {
+                final long remainingMillis = finishAtMillis - System.currentTimeMillis();
+                if (remainingMillis < 0) {
+                    return false;
+                }
+                try {
+                    Thread.sleep(Math.min(interval, remainingMillis));
+                } catch (final InterruptedException ignore) {
+                    wasInterrupted = true;
+                } catch (final Exception ex) {
+                    break;
+                }
+            }
+        } finally {
+            driver.manage().timeouts().implicitlyWait(duration);
+            if (wasInterrupted) {
+                Thread.currentThread().interrupt();
             }
         }
-        return flag;
+        return true;
     }
 
-    @Override
+
     public boolean isElementExist(String text, int secondTimeout) {
-        boolean flag = false;
+        Duration duration = driver.manage().timeouts().getImplicitWaitTimeout();
         String value = XpathBuilder.xpathGenerator(text);
-        log.info("checking presence of the element: {}", value);
-        for (int i = 0; i < secondTimeout * 1000 / interval; i++) {
-            try {
-                WebElement ele = driver.findElement(By.xpath(value));
-                highlightElement(ele);
-                flag = true;
-                break;
-            } catch (WebDriverException e) {
-                Tools.sleep(interval);
+        log.info("waiting for element: \"{}\" to appear within {} seconds", value, secondTimeout);
+        boolean wasInterrupted = false;
+        final long finishAtMillis = System.currentTimeMillis() + (secondTimeout * 1000L);
+        try {
+            while (!elementLoaded(value)) {
+                final long remainingMillis = finishAtMillis - System.currentTimeMillis();
+                if (remainingMillis < 0) {
+                    return false;
+                }
+                try {
+                    Thread.sleep(Math.min(interval, remainingMillis));
+                } catch (final InterruptedException ignore) {
+                    wasInterrupted = true;
+                } catch (final Exception ex) {
+                    break;
+                }
+            }
+        } finally {
+            driver.manage().timeouts().implicitlyWait(duration);
+            if (wasInterrupted) {
+                Thread.currentThread().interrupt();
             }
         }
-        return flag;
+        return true;
     }
 
-    @Override
-    public boolean isElementExist(String text, float millSecondTimeout) {
-        boolean flag = false;
-        String value = XpathBuilder.xpathGenerator(text);
-        log.info("checking presence of the element: {}", value);
-        for (int i = 0; i < millSecondTimeout * 1000 / interval; i++) {
-            try {
-                WebElement ele = driver.findElement(By.xpath(value));
-                highlightElement(ele);
-                flag = true;
-                break;
-            } catch (WebDriverException e) {
-                Tools.sleep(interval);
-            }
-        }
-        return flag;
-    }
-
-    @Override
     public boolean isElementNotExist(String text) {
-        boolean flag = false;
+        Duration duration = driver.manage().timeouts().getImplicitWaitTimeout();
         String value = XpathBuilder.xpathGenerator(text);
-        log.info("waiting element gone: {}", value);
-        for (int i = 0; i < secondTimeOut * 1000 / interval; i++) {
-            try {
-                Tools.sleep(interval);
-                WebElement ele = driver.findElement(By.xpath(value));
-                highlightElement(ele);
-            } catch (WebDriverException e) {
-                if (e.toString() != null) {
-                    flag = true;
+        log.info("waiting for element: \"{}\" to disappear within {} seconds", value, secondTimeout);
+        boolean wasInterrupted = false;
+        final long finishAtMillis = System.currentTimeMillis() + (secondTimeout * 1000L);
+        try {
+            while (elementLoaded(value)) {
+                final long remainingMillis = finishAtMillis - System.currentTimeMillis();
+                if (remainingMillis < 0) {
+                    return false;
+                }
+                try {
+                    Thread.sleep(Math.min(interval, remainingMillis));
+                } catch (final InterruptedException ignore) {
+                    wasInterrupted = true;
+                } catch (final Exception ex) {
                     break;
                 }
             }
+        } finally {
+            driver.manage().timeouts().implicitlyWait(duration);
+            if (wasInterrupted) {
+                Thread.currentThread().interrupt();
+            }
         }
-        return flag;
+        return true;
     }
 
-    @Override
+
     public boolean isElementNotExist(String text, int secondTimeout) {
-        boolean flag = false;
+        Duration duration = driver.manage().timeouts().getImplicitWaitTimeout();
         String value = XpathBuilder.xpathGenerator(text);
-        log.info("waiting element gone: {}", value);
-        for (int i = 0; i < secondTimeout * 1000 / interval; i++) {
-            try {
-                Tools.sleep(interval);
-                WebElement ele = driver.findElement(By.xpath(value));
-                highlightElement(ele);
-            } catch (WebDriverException e) {
-                if (e.toString() != null) {
-                    flag = true;
+        log.info("waiting for element: \"{}\" to disappear within {} seconds", value, secondTimeout);
+        boolean wasInterrupted = false;
+        final long finishAtMillis = System.currentTimeMillis() + (secondTimeout * 1000L);
+        try {
+            while (elementLoaded(value)) {
+                final long remainingMillis = finishAtMillis - System.currentTimeMillis();
+                if (remainingMillis < 0) {
+                    return false;
+                }
+                try {
+                    Thread.sleep(Math.min(interval, remainingMillis));
+                } catch (final InterruptedException ignore) {
+                    wasInterrupted = true;
+                } catch (final Exception ex) {
                     break;
                 }
             }
+        } finally {
+            driver.manage().timeouts().implicitlyWait(duration);
+            if (wasInterrupted) {
+                Thread.currentThread().interrupt();
+            }
         }
-        return flag;
+        return true;
     }
 
-    @Override
+
     public boolean isElementExistContain(String text) {
         boolean flag;
         String value = XpathBuilder.xpathContainsGenerator(text);
@@ -652,7 +706,7 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         return flag;
     }
 
-    @Override
+
     public boolean isElementExistContain(String text, int secondTimeout) {
         boolean flag;
         String value = XpathBuilder.xpathContainsGenerator(text);
@@ -666,12 +720,12 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         return flag;
     }
 
-    @Override
+
     public boolean isElementClickable(By by) {
         boolean flag;
         try {
             FluentWait<WebDriver> wait = new FluentWait<>(driver)
-                    .withTimeout(Duration.ofSeconds(secondTimeOut))
+                    .withTimeout(Duration.ofSeconds(secondTimeout))
                     .pollingEvery(Duration.ofMillis(interval))
                     .ignoring(WebDriverException.class);
             wait.until((ExpectedConditions.elementToBeClickable(by)));
@@ -684,7 +738,7 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         return flag;
     }
 
-    @Override
+
     public boolean isElementClickable(By by, int timeOut) {
         boolean flag;
         try {
@@ -702,12 +756,12 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         return flag;
     }
 
-    @Override
+
     public boolean isElementClickable(WebElement element) {
         boolean flag;
         try {
             FluentWait<WebDriver> wait = new FluentWait<>(driver)
-                    .withTimeout(Duration.ofSeconds(secondTimeOut))
+                    .withTimeout(Duration.ofSeconds(secondTimeout))
                     .pollingEvery(Duration.ofMillis(interval))
                     .ignoring(WebDriverException.class);
             wait.until((ExpectedConditions.elementToBeClickable(element)));
@@ -720,7 +774,7 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         return flag;
     }
 
-    @Override
+
     public boolean isElementClickable(WebElement element, int millisTimeOut) {
         boolean flag;
         try {
@@ -738,12 +792,12 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         return flag;
     }
 
-    @Override
+
     public boolean isElementClickable(String xpath) {
         boolean flag;
         try {
             FluentWait<WebDriver> wait = new FluentWait<>(driver)
-                    .withTimeout(Duration.ofSeconds(secondTimeOut))
+                    .withTimeout(Duration.ofSeconds(secondTimeout))
                     .pollingEvery(Duration.ofMillis(interval))
                     .ignoring(WebDriverException.class);
             wait.until((ExpectedConditions.elementToBeClickable(By.xpath(xpath))));
@@ -755,7 +809,7 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         return flag;
     }
 
-    @Override
+
     public boolean isElementClickable(String xpath, int secondTimeOut) {
         boolean flag;
         try {
@@ -772,26 +826,26 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         return flag;
     }
 
-    @Override
+
     public boolean isElementOperability(String text) {
         return findElement(text).isEnabled() && findElement(text).isDisplayed();
     }
 
-    @Override
+
     public boolean isElementOperability(String text, int secondTimeout) {
-        return findElement(text, secondTimeOut).isEnabled() && findElement(text, secondTimeOut).isDisplayed();
+        return findElement(text, DriverOperation.secondTimeout).isEnabled() && findElement(text, DriverOperation.secondTimeout).isDisplayed();
     }
 
-    @Override
+
     public void waitElementOperability(String text) {
-        for (int i = 0; i < secondTimeOut * 1000 / interval; i++) {
+        for (int i = 0; i < secondTimeout * 1000 / interval; i++) {
             if (isElementOperability(text)) {
                 break;
             }
         }
     }
 
-    @Override
+
     public String getTagAllAttributes(String text) {
         Object attr = js.executeScript("var items = {}; " +
                 "for (index = 0; index < arguments[0].attributes.length; ++index) " +
@@ -800,36 +854,161 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         return attr.toString();
     }
 
-    @Override
+
     public boolean isElementEnabled(String text) {
         return !getTagAllAttributes(text).contains("disable");
     }
 
-    @Override
+
     public String getElementRGBAColor(String text) {
         return findElement(text).getCssValue("color");
     }
 
-    @Override
+
     public String getElementHexColor(String text) {
         return Color.fromString(findElement(text).getCssValue("color")).asHex();
 
     }
 
-    @Override
+
     public String getElementColorName(String text, String cssColor) {
         java.awt.Color colorObj = Color.fromString(findElementContains(text).getCssValue(cssColor)).getColor();
         return ColorUtils.getColorNameFromColor(colorObj);
     }
 
-    @Override
+
     public Boolean isElementHidden(WebElement element) {
         return (Boolean) js.executeScript("return arguments[0].hidden;", element);
     }
 
-    @Override
+
     public Boolean isElementHidden(String text) {
         return (Boolean) js.executeScript("return arguments[0].hidden;", findElement(text));
+    }
+
+
+    public String text(String text) {
+        return "text->" + text.replace("\"", "");
+    }
+
+
+    public void clickTextWithLastIndex(String text) {
+        List<WebElement> elements = findElements(text(text));
+        click(text(text), String.valueOf(elements.size()));
+    }
+
+
+    public void clickText(String text) {
+        click(text(text));
+    }
+
+
+    public void clickTextWithIndex(String text, String index) {
+        click(text(text), index);
+    }
+
+
+    public void clickPositionByBesidesText(int pixel, Direction direction, String xpath) {
+        switch (direction) {
+            case UP:
+                clickXYBesidesText(pixel, Direction.UP, xpath);
+                break;
+            case DOWN:
+                clickXYBesidesText(pixel, Direction.DOWN, xpath);
+                break;
+            case RIGHT:
+                clickXYBesidesText(pixel, Direction.RIGHT, xpath);
+                break;
+            case LEFT:
+                clickXYBesidesText(pixel, Direction.LEFT, xpath);
+                break;
+            default:
+                throw new IllegalArgumentException("unsupported direction type: " + direction);
+        }
+    }
+
+
+    public int countElements(String value) {
+        String xpath = XpathBuilder.xpathGenerator(value);
+        if (isElementExist(value)) {
+            List<WebElement> elements = driver.findElements(By.xpath(xpath));
+            return elements.size();
+        } else {
+            throw new NoSuchContextException("unable to find the element: " + xpath);
+        }
+    }
+
+
+    public int countElements(String value, int seconds) {
+        String xpath = XpathBuilder.xpathGenerator(value);
+        if (isElementExist(value, seconds)) {
+            List<WebElement> elements = driver.findElements(By.xpath(xpath));
+            return elements.size();
+        } else {
+            throw new NoSuchContextException("unable to find the element: " + xpath);
+        }
+    }
+
+    public WebElement getTableLastElement(String rowName) {
+        return new Table().getLastColByRowText(rowName);
+    }
+
+    public WebElement getTableLastElementWithSuffix(String rowName, String suffix) {
+        return new Table().getLastColByRowText(rowName, suffix);
+    }
+
+    public WebElement getTableElementByindex(String rowName, String index) {
+        return new Table().getLastColByRowTextWithIndex(rowName, index);
+    }
+
+    public WebElement getTableElementByRowColum(String rowName, String columName) {
+        return new Table().getByRowColum(rowName, columName);
+    }
+
+    public WebElement getTableElementByRowColum(String rowName, String columName, String targetElementSuffix) {
+        return new Table().getByRowColum(rowName, columName, targetElementSuffix);
+    }
+
+    public List<WebElement> getElementsByColumnName(String columnName) {
+        return new Table().getByColum(columnName);
+    }
+
+    public List<WebElement> getElementsByColumnName(String columnName, int offset) {
+        return new Table().getByColum(columnName, String.valueOf(offset));
+    }
+
+    class Table {
+        String lastXpathModle = "//*[text()=\"%s\"]/ancestor::tr/td[%s]";
+        String rowColumModel = "//*[text()=\"%s\"]/ancestor::tr/td[count(//table//thead//*[text()=\"%s\"]/ancestor::th//preceding-sibling::*)]";
+        String specificColumText = "//table//td[count((//table//*[text()=\"%s\"])[last()]/ancestor-or-self::th/preceding-sibling::*) +%s]";
+
+        WebElement getLastColByRowText(String text) {
+            return findElement(String.format(lastXpathModle, text, "last()"));
+        }
+
+        WebElement getLastColByRowText(String text, String targetTextSuffix) {
+            return findElement(String.format(lastXpathModle + targetTextSuffix, text, "last()"));
+        }
+
+        WebElement getLastColByRowTextWithIndex(String text, String index) {
+            return findElement(String.format(lastXpathModle, text, index));
+        }
+
+        WebElement getByRowColum(String row, String column) {
+            return findElement(String.format(rowColumModel, row, column));
+        }
+
+        WebElement getByRowColum(String row, String column, String targetElementSuffix) {
+            return findElement(String.format(rowColumModel + targetElementSuffix, row, column));
+        }
+
+        List<WebElement> getByColum(String column) {
+            return findElements(String.format(specificColumText, column, 1));
+        }
+
+        List<WebElement> getByColum(String column, String index) {
+            return findElements(String.format(specificColumText, column, index));
+        }
     }
 
     private void highlightElement(WebElement element) {
@@ -852,6 +1031,16 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         js.executeScript("arguments[0].removeAttribute('style','')", element);
     }
 
+    private boolean elementLoaded(String text) {
+        try {
+            WebElement element = driver.findElement(By.xpath(text));
+            highlightElement(element);
+            return true;
+        } catch (WebDriverException e) {
+            return false;
+        }
+    }
+
     private String getElementXPath(WebElement element) {
         return (String) js.executeScript(
                 "getXPath=function(node)" + "{" + "if (node.id !== '')" + "{" +
@@ -864,47 +1053,6 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
                         "if (currentNode.nodeType === 1 && " +
                         "currentNode.tagName.toLowerCase() === node.tagName.toLowerCase())" + "{" + "nodeCount++" + "}" + "}" + "};" +
                         "return getXPath(arguments[0]);", element);
-    }
-
-    @Override
-    public String text(@NonNull String text) {
-        return "text->" + text.replace("\"", "");
-    }
-
-    @Override
-    public void clickTextWithLastIndex(@NonNull String text) {
-        List<WebElement> elements = findElements(text(text));
-        click(text(text), String.valueOf(elements.size()));
-    }
-
-    @Override
-    public void clickText(@NonNull String text) {
-        click(text(text));
-    }
-
-    @Override
-    public void clickTextWithIndex(@NonNull String text, @NonNull String index) {
-        click(text(text), index);
-    }
-
-    @Override
-    public void clickPositionByBesidesText(int pixel, Direction direction, String xpath) {
-        switch (direction) {
-            case UP:
-                clickXYBesidesText(pixel, Direction.UP, xpath);
-                break;
-            case DOWN:
-                clickXYBesidesText(pixel, Direction.DOWN, xpath);
-                break;
-            case RIGHT:
-                clickXYBesidesText(pixel, Direction.RIGHT, xpath);
-                break;
-            case LEFT:
-                clickXYBesidesText(pixel, Direction.LEFT, xpath);
-                break;
-            default:
-                throw new IllegalArgumentException("unsupported direction type: " + direction);
-        }
     }
 
     private void toInitialPoint() {
@@ -997,9 +1145,79 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         }
     }
 
+    private void executeClick(String value, Operator before, Operator after) {
+        log.info("clicking element: {}", value);
+        if (isElementClickable(value)) {
+            try {
+                List<WebElement> elements = driver.findElements(By.xpath(value));
+                highlightElement(elements);
+                if (elements.size() == 1) {
+                    before.apply();
+                    elements.get(0).click();
+                    after.apply();
+                } else {
+                    log.warn("the number of the element: {} are: {}", value, elements.size());
+                    for (WebElement i : elements) {
+                        if (isElementClickable(i, secondTimeout)) {
+                            before.apply();
+                            i.click();
+                            after.apply();
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            } catch (WebDriverException e) {
+                log.error(e.toString(), e);
+                log.error("=====================================================================");
+                log.error("xpath is: {}", getElementXPath(driver.findElements(By.xpath(value)).get(0)));
+                log.error("=====================================================================");
+                if (e instanceof StaleElementReferenceException || e instanceof ElementNotInteractableException) {
+                    highlightElement(driver.findElement(By.xpath(value)));
+                    before.apply();
+                    jsClick(value);
+                    after.apply();
+                }
+            }
+        } else {
+            List<WebElement> elements = new ArrayList<>(driver.findElements(By.xpath(value)));
+            if (elements.size() == 1) {
+                try {
+                    before.apply();
+                    elements.get(0).click();
+                    after.apply();
+                } catch (WebDriverException e) {
+                    if (e instanceof StaleElementReferenceException || e instanceof ElementNotInteractableException) {
+                        highlightElement(driver.findElement(By.xpath(value)));
+                        before.apply();
+                        jsClick(value);
+                        after.apply();
+                    } else {
+                        throw new WebDriverException("the element: (" + value + ") is not clickable");
+                    }
+                }
+            } else if (elements.size() > 1) {
+                elements.remove(0);
+                for (WebElement i : elements) {
+                    try {
+                        before.apply();
+                        i.click();
+                        after.apply();
+                    } catch (WebDriverException e) {
+                        if (e instanceof StaleElementReferenceException || e instanceof ElementNotInteractableException) {
+                            highlightElement(driver.findElement(By.xpath(value)));
+                            before.apply();
+                            jsClick(value);
+                            after.apply();
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     private WebElement executeFindElement(String value) {
-        for (int i = 0; i < secondTimeOut * 1000 / interval; i++) {
+        for (int i = 0; i < secondTimeout * 1000 / interval; i++) {
             try {
                 WebElement element = driver.findElement(By.xpath(value));
                 highlightElement(element);
@@ -1025,7 +1243,7 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
     }
 
     private List<WebElement> executeFindElements(String value) {
-        for (int i = 0; i < secondTimeOut * 1000 / interval; i++) {
+        for (int i = 0; i < secondTimeout * 1000 / interval; i++) {
             List<WebElement> elements = driver.findElements(By.xpath(value));
             highlightElement(elements);
             if (!elements.isEmpty()) {
@@ -1059,8 +1277,13 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
     }
 
     private Actions action(int X, int Y) {
-        nextXPoint = X - currentXPoint;
-        nextYpoint = Y - currentYPoint;
+        if ((currentXPoint + currentYPoint) == 0) {
+            nextXPoint = X;
+            nextYpoint = Y;
+        } else {
+            nextXPoint = X - currentXPoint;
+            nextYpoint = Y - currentYPoint;
+        }
         currentXPoint = currentXPoint + nextXPoint;
         currentYPoint = currentYPoint + nextYpoint;
         return actions;

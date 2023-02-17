@@ -21,8 +21,8 @@ public class Examples {
         browser.get("https://www.selenium.dev/");
         browser.click("text->Documentation");
         browser.clickText("Blog");
-        browser.click(Xpath.attribute("data-toggle", "dropdown").build(),"1");
-        browser.click(1800,30);
+        browser.click(Xpath.attribute("data-toggle", "dropdown").build(), "1");
+        browser.click(1800, 30);
         browser.input("@class->DocSearch-Input", "selenium-smart");
         Tools.sleep(3000);
         browser.closeBrowser();
@@ -45,6 +45,10 @@ public class Examples {
                 .duration(Duration.ofSeconds(60))
                 .experimentalOption(eOptions)
                 .downloadDirectory(System.getProperty("user.dir") + File.separator + "target" + File.separator + "downloads")
+                .maximizeWindow(true)
+                .disableGpu(true)
+                .disableExtensions(true)
+                .disableDevShmUsage(true)
                 .build();
     }
 

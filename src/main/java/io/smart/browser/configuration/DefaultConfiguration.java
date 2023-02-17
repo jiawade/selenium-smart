@@ -27,4 +27,7 @@ public abstract class DefaultConfiguration {
     public String driverPath;
 
     public DesiredCapabilities desiredCapabilities;
+
+    public boolean maximizeWindow;
+
 }

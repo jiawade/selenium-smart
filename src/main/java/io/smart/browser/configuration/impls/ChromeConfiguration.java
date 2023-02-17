@@ -25,4 +25,12 @@ public class ChromeConfiguration extends DefaultConfiguration implements Configu
 
     public String downloadDirectory;
 
+    public boolean noSandbox;
+
+    public boolean disableGpu;
+
+    public boolean disableExtensions;
+
+    public boolean disableDevShmUsage;
+
 }

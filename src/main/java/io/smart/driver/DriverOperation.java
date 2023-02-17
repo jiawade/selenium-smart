@@ -11,7 +11,8 @@ import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.events.EventFiringWebDriver;
 import org.openqa.selenium.support.events.WebDriverEventListener;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Set;
 
 
 @Slf4j
@@ -19,7 +20,7 @@ public class DriverOperation {
     public static WebDriver driver;
     public static Actions actions;
     public static JavascriptExecutor js;
-    public static int secondTimeOut = 30;
+    public static int secondTimeout = 30;
     public static final int interval = 100;
 
 
@@ -76,6 +77,10 @@ public class DriverOperation {
 
     public String getTitle() {
         return driver.getTitle();
+    }
+
+    public String getCurrentUrl() {
+        return driver.getCurrentUrl();
     }
 
     public void previousPage() {

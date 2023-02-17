@@ -1,19 +1,19 @@
 package io.smart.browser.browsers;
 
-import io.smart.browser.configuration.impls.ChromeConfiguration;
-import io.smart.browser.configuration.Configuration;
-import io.smart.enums.SystemType;
-
 import io.github.bonigarcia.wdm.WebDriverManager;
+import io.smart.browser.configuration.Configuration;
+import io.smart.browser.configuration.impls.ChromeConfiguration;
+import io.smart.enums.SystemType;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 
-
 import java.io.File;
 import java.time.Duration;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 public class ChromeBrowser extends Browser {
@@ -28,7 +28,6 @@ public class ChromeBrowser extends Browser {
                 .duration(Duration.ofSeconds(60))
                 .width(1920)
                 .hight(1080)
-                .headless(false)
                 .chromeOptions(new ChromeOptions())
                 .build();
         ChromeOptions options = conf.getChromeOptions();
@@ -60,6 +59,18 @@ public class ChromeBrowser extends Browser {
     }
 
     private ChromeDriver getDriver(ChromeConfiguration conf, ChromeOptions options) {
+        if (conf.noSandbox) {
+            options.addArguments("--no-sandbox");
+        }
+        if (conf.disableGpu) {
+            options.addArguments("--disable-gpu");
+        }
+        if (conf.disableExtensions) {
+            options.addArguments("--disable-extensions");
+        }
+        if (conf.disableDevShmUsage) {
+            options.addArguments("--disable-dev-shm-usage");
+        }
         if (!Objects.isNull(conf.getDriverPath())) {
             if (new File(conf.getDriverPath()).exists()) {
                 System.setProperty("webdriver.chrome.driver", conf.getDriverPath());
@@ -102,7 +113,11 @@ public class ChromeBrowser extends Browser {
         }
         driver.manage().timeouts().pageLoadTimeout(conf.getDuration());
         driver.manage().window().setSize(new Dimension(conf.getWidth(), conf.getHight()));
-        driver.manage().window().maximize();
+        if (conf.maximizeWindow) {
+            driver.manage().window().maximize();
+        }
         return driver;
     }
+
+
 }

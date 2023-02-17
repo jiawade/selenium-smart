@@ -1,9 +1,9 @@
 package io.smart.browser.browsers;
 
+import io.github.bonigarcia.wdm.WebDriverManager;
 import io.smart.browser.configuration.Configuration;
 import io.smart.browser.configuration.impls.FireFoxConfiguration;
 import io.smart.enums.SystemType;
-import io.github.bonigarcia.wdm.WebDriverManager;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -62,6 +62,18 @@ public class FirefoxBrowser extends Browser {
     }
 
     private FirefoxDriver getDriver(FireFoxConfiguration conf, FirefoxOptions options) {
+        if (conf.noSandbox) {
+            options.addArguments("--no-sandbox");
+        }
+        if (conf.disableGpu) {
+            options.addArguments("--disable-gpu");
+        }
+        if (conf.disableExtensions) {
+            options.addArguments("--disable-extensions");
+        }
+        if (conf.disableDevShmUsage) {
+            options.addArguments("--disable-dev-shm-usage");
+        }
         if (!Objects.isNull(conf.getDriverPath())) {
             if (new File(conf.getDriverPath()).exists()) {
                 System.setProperty("webdriver.gecko.driver", conf.getDriverPath());
@@ -90,7 +102,9 @@ public class FirefoxBrowser extends Browser {
         }
         driver.manage().timeouts().pageLoadTimeout(conf.getDuration());
         driver.manage().window().setSize(new Dimension(conf.getWidth(), conf.getHight()));
-        driver.manage().window().maximize();
+        if (conf.maximizeWindow) {
+            driver.manage().window().maximize();
+        }
         return driver;
     }
 

@@ -1,9 +1,9 @@
 package io.smart.browser.browsers;
 
+import io.github.bonigarcia.wdm.WebDriverManager;
 import io.smart.browser.configuration.Configuration;
 import io.smart.browser.configuration.impls.SafariConfiguration;
 import io.smart.enums.SystemType;
-import io.github.bonigarcia.wdm.WebDriverManager;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -70,7 +70,9 @@ public class SafariBrowser extends Browser{
         }
         driver.manage().timeouts().pageLoadTimeout(conf.getDuration());
         driver.manage().window().setSize(new Dimension(conf.getWidth(), conf.getHight()));
-        driver.manage().window().maximize();
+        if (conf.maximizeWindow) {
+            driver.manage().window().maximize();
+        }
         return driver;
     }
 }

@@ -1,9 +1,9 @@
 package io.smart.browser.browsers;
 
+import io.github.bonigarcia.wdm.WebDriverManager;
 import io.smart.browser.configuration.Configuration;
 import io.smart.browser.configuration.impls.EdgeConfiguration;
 import io.smart.enums.SystemType;
-import io.github.bonigarcia.wdm.WebDriverManager;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -59,6 +59,18 @@ public class EdgeBrowser extends Browser {
     }
 
     private EdgeDriver getDriver(EdgeConfiguration conf, EdgeOptions options) {
+        if (conf.noSandbox) {
+            options.addArguments("--no-sandbox");
+        }
+        if (conf.disableGpu) {
+            options.addArguments("--disable-gpu");
+        }
+        if (conf.disableExtensions) {
+            options.addArguments("--disable-extensions");
+        }
+        if (conf.disableDevShmUsage) {
+            options.addArguments("--disable-dev-shm-usage");
+        }
         if (!Objects.isNull(conf.getDriverPath())) {
             if (new File(conf.getDriverPath()).exists()) {
                 System.setProperty("webdriver.edge.driver", conf.getDriverPath());
@@ -101,7 +113,9 @@ public class EdgeBrowser extends Browser {
         }
         driver.manage().timeouts().pageLoadTimeout(conf.getDuration());
         driver.manage().window().setSize(new Dimension(conf.getWidth(), conf.getHight()));
-        driver.manage().window().maximize();
+        if (conf.maximizeWindow) {
+            driver.manage().window().maximize();
+        }
         return driver;
     }
 }

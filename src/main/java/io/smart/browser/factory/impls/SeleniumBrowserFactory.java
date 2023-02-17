@@ -1,11 +1,11 @@
 package io.smart.browser.factory.impls;
 
 
-import io.smart.browser.browsers.SafariBrowser;
-import io.smart.browser.configuration.Configuration;
 import io.smart.browser.browsers.ChromeBrowser;
 import io.smart.browser.browsers.EdgeBrowser;
 import io.smart.browser.browsers.FirefoxBrowser;
+import io.smart.browser.browsers.SafariBrowser;
+import io.smart.browser.configuration.Configuration;
 import io.smart.browser.factory.BrowserFactory;
 import io.smart.enums.BrowserType;
 import lombok.extern.slf4j.Slf4j;

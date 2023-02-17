@@ -19,4 +19,12 @@ public class FireFoxConfiguration extends DefaultConfiguration implements Config
     public FirefoxOptions firefoxOptions;
 
     public FirefoxDriverService firefoxDriverService;
+
+    public boolean noSandbox;
+
+    public boolean disableGpu;
+
+    public boolean disableExtensions;
+
+    public boolean disableDevShmUsage;
 }
