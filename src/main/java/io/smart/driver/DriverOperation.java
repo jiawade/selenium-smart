@@ -1,5 +1,6 @@
 package io.smart.driver;
 
+import io.smart.utils.FileUtils;
 import io.smart.utils.tools.Tools;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -11,40 +12,41 @@ import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.events.EventFiringWebDriver;
 import org.openqa.selenium.support.events.WebDriverEventListener;
 
+import javax.swing.filechooser.FileSystemView;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Set;
 
 
 @Slf4j
 public class DriverOperation {
-    public static WebDriver driver;
-    public static Actions actions;
-    public static JavascriptExecutor js;
-    public static int secondTimeout = 30;
+    public WebDriver driver;
+    public Actions actions;
+    public JavascriptExecutor js;
+    public static final int secondTimeout = 30;
     public static final int interval = 100;
 
 
-
     public DriverOperation(@NonNull WebDriver driver) {
-        DriverOperation.driver = driver;
+        this.driver = driver;
         actions = new Actions(driver);
         js = (JavascriptExecutor) driver;
     }
 
     public DriverOperation(@NonNull WebDriver driver, @NonNull WebDriverEventListener listener) {
-        DriverOperation.driver = new EventFiringWebDriver(driver).register(listener);
+        this.driver = new EventFiringWebDriver(driver).register(listener);
         actions = new Actions(driver);
         js = (JavascriptExecutor) driver;
     }
 
     public void setWebDriver(@NonNull WebDriver driver) {
-        DriverOperation.driver = driver;
+        this.driver = driver;
         actions = new Actions(driver);
         js = (JavascriptExecutor) driver;
     }
 
     public void setWebDriver(@NonNull WebDriver driver, @NonNull WebDriverEventListener listener) {
-        DriverOperation.driver = new EventFiringWebDriver(driver).register(listener);
+        this.driver = new EventFiringWebDriver(driver).register(listener);
         actions = new Actions(driver);
         js = (JavascriptExecutor) driver;
     }
@@ -67,12 +69,10 @@ public class DriverOperation {
 
     public String getWindowHandle() {
         return driver.getWindowHandle();
-
     }
 
     public Set<String> getWindowHandles() {
         return driver.getWindowHandles();
-
     }
 
     public String getTitle() {
@@ -95,11 +95,11 @@ public class DriverOperation {
         driver.navigate().refresh();
     }
 
-    public WebDriver.Options manage(){
+    public WebDriver.Options manage() {
         return driver.manage();
     }
 
-    public WebDriver.TargetLocator switchTo(){
+    public WebDriver.TargetLocator switchTo() {
         return driver.switchTo();
     }
 
@@ -173,4 +173,15 @@ public class DriverOperation {
         return value;
     }
 
+    public void savePageSource(File file) {
+        log.info("saving current page soruce to: \"{}\"", file.getPath());
+        String pageSource = this.getPageSource();
+        FileUtils.writeStringToFile(file.getAbsolutePath(), pageSource);
+    }
+
+    public void savePageSourceToDesktop() {
+        File desktopDirectory = FileSystemView.getFileSystemView().getHomeDirectory();
+        File directory = new File(desktopDirectory.getAbsolutePath() + File.separator + this.getTitle() + ".html");
+        savePageSource(directory);
+    }
 }

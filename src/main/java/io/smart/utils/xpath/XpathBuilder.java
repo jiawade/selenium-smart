@@ -51,6 +51,9 @@ public class XpathBuilder {
 
 
     public static String xpathGenerator(String text, String index) {
+        if (Integer.parseInt(index) <= 0) {
+            throw new IllegalArgumentException("index must be greater than 0");
+        }
         String value;
         if (text.contains("->")) {
             String[] xpath = text.split("->");
@@ -123,8 +126,8 @@ public class XpathBuilder {
         return value;
     }
 
-    public static String xpathContainsGenerator(String text, int index) {
-        if (index <= 0) {
+    public static String xpathContainsGenerator(String text, String index) {
+        if (Integer.parseInt(index) <= 0) {
             throw new IllegalArgumentException("index must be greater than 0");
         }
         String value = null;
