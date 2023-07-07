@@ -8,12 +8,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.logging.LogType;
+import org.openqa.selenium.logging.LoggingPreferences;
+import org.openqa.selenium.remote.CapabilityType;
 
 import java.io.File;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.logging.Level;
 
 @Slf4j
 public class ChromeBrowser extends Browser {
@@ -27,7 +31,7 @@ public class ChromeBrowser extends Browser {
         ChromeConfiguration conf = ChromeConfiguration.builder()
                 .duration(Duration.ofSeconds(60))
                 .width(1920)
-                .hight(1080)
+                .height(1080)
                 .chromeOptions(new ChromeOptions())
                 .build();
         ChromeOptions options = conf.getChromeOptions();
@@ -71,6 +75,13 @@ public class ChromeBrowser extends Browser {
         if (conf.disableDevShmUsage) {
             options.addArguments("--disable-dev-shm-usage");
         }
+        if (conf.enablePerformanceLog) {
+            LoggingPreferences logPrefs = new LoggingPreferences();
+            logPrefs.enable(LogType.PERFORMANCE, Level.ALL);
+            options.setCapability("enableNetwork", true);
+            options.setCapability(CapabilityType.ACCEPT_INSECURE_CERTS, true);
+            options.setCapability("goog:loggingPrefs", logPrefs);
+        }
         if (!Objects.isNull(conf.getDriverPath())) {
             if (new File(conf.getDriverPath()).exists()) {
                 System.setProperty("webdriver.chrome.driver", conf.getDriverPath());
@@ -105,6 +116,12 @@ public class ChromeBrowser extends Browser {
                 options.setExperimentalOption("prefs", prefs);
             }
         }
+        if (!Objects.isNull(conf.getPageLoadStrategy())) {
+            options.setPageLoadStrategy(conf.getPageLoadStrategy());
+        }
+        if (!Objects.isNull(conf.getProxy())) {
+            options.setProxy(conf.getProxy());
+        }
         ChromeDriver driver;
         if (!Objects.isNull(conf.getChromeDriverService())) {
             driver = new ChromeDriver(conf.getChromeDriverService(), options);
@@ -112,7 +129,7 @@ public class ChromeBrowser extends Browser {
             driver = new ChromeDriver(options);
         }
         driver.manage().timeouts().pageLoadTimeout(conf.getDuration());
-        driver.manage().window().setSize(new Dimension(conf.getWidth(), conf.getHight()));
+        driver.manage().window().setSize(new Dimension(conf.getWidth(), conf.getHeight()));
         if (conf.maximizeWindow) {
             driver.manage().window().maximize();
         }

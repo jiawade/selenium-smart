@@ -1,7 +1,9 @@
 package io.smart.driver;
 
 import io.smart.utils.FileUtils;
-import io.smart.utils.tools.Tools;
+import io.smart.utils.Pair;
+import io.smart.utils.tools.Helper;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
@@ -9,13 +11,16 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.logging.LogEntries;
+import org.openqa.selenium.logging.LogType;
 import org.openqa.selenium.support.events.EventFiringWebDriver;
 import org.openqa.selenium.support.events.WebDriverEventListener;
 
 import javax.swing.filechooser.FileSystemView;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Set;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 @Slf4j
@@ -25,6 +30,9 @@ public class DriverOperation {
     public JavascriptExecutor js;
     public static final int secondTimeout = 30;
     public static final int interval = 100;
+    private Set<String> logMessages = Collections.synchronizedSet(new HashSet<>());
+    private Set<String> webSocketSentMessages = Collections.synchronizedSet(new HashSet<>());
+    private Set<String> webSocketReceivedMessages = Collections.synchronizedSet(new HashSet<>());
 
 
     public DriverOperation(@NonNull WebDriver driver) {
@@ -52,6 +60,7 @@ public class DriverOperation {
     }
 
     public void get(@NonNull String url) {
+        log.info("input url: {}", url);
         driver.get(url);
     }
 
@@ -133,6 +142,18 @@ public class DriverOperation {
         return expectedSize.toString().equals(actualSize.toString());
     }
 
+    public Pair<Integer, Integer> getElementSize(WebElement element) {
+        return Pair.of(element.getSize().getWidth(), element.getSize().getHeight());
+    }
+
+    public Pair<Integer, Integer> getElementLocation(WebElement element) {
+        return Pair.of(element.getLocation().getX(), element.getLocation().getY());
+    }
+
+    public Pair<Integer, Integer> getPageSize() {
+        return Pair.of(manage().window().getSize().getWidth(), manage().window().getSize().getHeight());
+    }
+
     public Object takeScreenshot(WebElement webElement, OutputType<?> outputType) {
         return webElement.getScreenshotAs(outputType);
     }
@@ -159,6 +180,16 @@ public class DriverOperation {
         }
     }
 
+    public void setLocalItem(String key, String value) {
+        if (driver instanceof ChromeDriver) {
+            ((ChromeDriver) driver).getLocalStorage().setItem(key, value);
+        } else if (driver instanceof FirefoxDriver) {
+            ((FirefoxDriver) driver).getLocalStorage().setItem(key, value);
+        } else if (driver instanceof EdgeDriver) {
+            ((EdgeDriver) driver).getLocalStorage().setItem(key, value);
+        }
+    }
+
     public String getSessionItem(String key) {
         String value = null;
         ChromeDriver d = (ChromeDriver) driver;
@@ -167,7 +198,7 @@ public class DriverOperation {
             if (value != null) {
                 break;
             } else {
-                Tools.sleep(1000);
+                Helper.sleep(1000);
             }
         }
         return value;
@@ -184,4 +215,73 @@ public class DriverOperation {
         File directory = new File(desktopDirectory.getAbsolutePath() + File.separator + this.getTitle() + ".html");
         savePageSource(directory);
     }
+
+    public Set<String> getMessages() {
+        getLogs().forEach(i -> logMessages.add(i.getMessage()));
+        return this.logMessages;
+    }
+
+    public Set<String> getSentWebsocketMessages() {
+        getMessages();
+        this.logMessages.forEach(i -> {
+            if (i.contains("Network.webSocketFrameSent")) {
+                webSocketSentMessages.add(i);
+            }
+        });
+        return this.webSocketSentMessages;
+    }
+
+    public Set<String> getReceivedWebsocketMessages() {
+        getMessages();
+        this.logMessages.forEach(i -> {
+            if (i.contains("Network.webSocketFrameReceived")) {
+                webSocketReceivedMessages.add(i);
+            }
+        });
+        return this.webSocketReceivedMessages;
+    }
+
+    public LogEntries getLogs(String type) {
+        Set<String> availableLogs = driver.manage().logs().getAvailableLogTypes();
+        if (!availableLogs.contains(type)) {
+            throw new IllegalArgumentException("unable to find performance log type, available log is: " + availableLogs);
+        }
+        return driver.manage().logs().get(type);
+    }
+
+    public LogEntries getLogs() {
+        Set<String> availableLogs = driver.manage().logs().getAvailableLogTypes();
+        if (!availableLogs.contains(LogType.PERFORMANCE)) {
+            throw new IllegalArgumentException("unable to find performance log type, available log is: " + availableLogs);
+        }
+        return driver.manage().logs().get(LogType.PERFORMANCE);
+    }
+
+    public Map<String, Integer> getUrlAndStatus() {
+        return new Logs().parseUrlAndCode(getLogs()).getUrlCode();
+    }
+
+    @Getter
+    static class Logs {
+        public Map<String, Integer> urlCode = new HashMap<>();
+        private static final String urlReg = "((https?|ftp|gopher|telnet|file):((//)|(\\\\))+[\\w\\d:#@%/;$()~_?\\+-=\\\\\\.&]*)";
+        private static final String codeReg = "(\"status\":)(\\d+)";
+        private final Pattern urlPattern = Pattern.compile(urlReg, Pattern.CASE_INSENSITIVE);
+        private final Pattern codePattern = Pattern.compile(codeReg, Pattern.CASE_INSENSITIVE);
+
+        public Logs parseUrlAndCode(LogEntries logEntries) {
+            logEntries.forEach(i -> {
+                if (i.getMessage().contains("status") && i.getMessage().contains("url")) {
+                    Matcher urlMatcher = urlPattern.matcher(i.getMessage());
+                    Matcher codeMatcher = codePattern.matcher(i.getMessage());
+                    while (urlMatcher.find() && codeMatcher.find()) {
+                        urlCode.put(i.getMessage().substring(urlMatcher.start(0), urlMatcher.end(0)), Integer.parseInt(codeMatcher.group(2)));
+                    }
+                }
+            });
+            return this;
+        }
+
+    }
+
 }

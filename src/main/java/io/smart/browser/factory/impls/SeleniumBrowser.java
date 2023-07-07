@@ -16,11 +16,12 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.safari.SafariDriver;
 
 @Slf4j
-public class SeleniumBrowserFactory implements BrowserFactory {
+public class SeleniumBrowser implements BrowserFactory {
     private WebDriver driver;
 
 
-    public SeleniumBrowserFactory setUp(BrowserType browserType, Boolean headless) {
+    @Override
+    public SeleniumBrowser setUp(BrowserType browserType, Boolean headless) {
         if (browserType.equals(BrowserType.CHROME)) {
             this.instanceChrome(headless);
             return this;
@@ -38,7 +39,8 @@ public class SeleniumBrowserFactory implements BrowserFactory {
         }
     }
 
-    public SeleniumBrowserFactory setUp(BrowserType browserType, Configuration conf) {
+    @Override
+    public SeleniumBrowser setUp(BrowserType browserType, Configuration conf) {
         if (browserType.equals(BrowserType.CHROME)) {
             this.instanceChrome(conf);
             return this;
@@ -56,10 +58,12 @@ public class SeleniumBrowserFactory implements BrowserFactory {
         }
     }
 
-    public Websocket getWebsocket() {
-        return new Websocket(getDriver());
+    @Override
+    public DevMode getDevTools() {
+        return new DevMode(getDriver());
     }
 
+    @Override
     public WebDriver getDriver() {
         return driver;
     }

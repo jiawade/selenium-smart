@@ -3,6 +3,8 @@ package io.smart.browser.configuration;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
+import org.openqa.selenium.PageLoadStrategy;
+import org.openqa.selenium.Proxy;
 import org.openqa.selenium.remote.DesiredCapabilities;
 
 import java.time.Duration;
@@ -14,7 +16,7 @@ public abstract class DefaultConfiguration {
     public int width;
 
     @NonNull
-    public int hight;
+    public int height;
 
     @NonNull
     public Duration duration;
@@ -29,5 +31,9 @@ public abstract class DefaultConfiguration {
     public DesiredCapabilities desiredCapabilities;
 
     public boolean maximizeWindow;
+
+    public PageLoadStrategy pageLoadStrategy;
+
+    public Proxy proxy;
 
 }

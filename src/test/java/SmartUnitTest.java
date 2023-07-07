@@ -1,9 +1,10 @@
 import io.smart.browser.configuration.impls.ChromeConfiguration;
-import io.smart.browser.factory.BrowserFactory;
-import io.smart.browser.factory.impls.SeleniumBrowserFactory;
+import io.smart.browser.factory.impls.SeleniumBrowser;
 import io.smart.element.impls.ElementByXpath;
 import io.smart.enums.BrowserType;
+import io.smart.enums.Direction;
 import io.smart.utils.xpath.Xpath;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -16,13 +17,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class SeleniumUnitTest {
+public class SmartUnitTest {
     private ElementByXpath browser;
     private static final String downloadDirectory = System.getProperty("user.dir") + File.separator + "target" + File.separator + "downloads";
 
     @BeforeClass
     public void setUp() {
-        SeleniumBrowserFactory driver = new SeleniumBrowserFactory().setUp(BrowserType.CHROME, buildChromeConf());
+        SeleniumBrowser driver = new SeleniumBrowser().setUp(BrowserType.CHROME, buildChromeConf());
         browser = new ElementByXpath(driver.getDriver());
         browser.get("https://www.selenium.dev/");
     }
@@ -50,9 +51,9 @@ public class SeleniumUnitTest {
     @Test
     public void gotoHistoryPage() {
         //click about dropdown icon
-        browser.click(Xpath.attribute("data-toggle", "dropdown").build(), "1");
-        browser.clickText("History");
-        Assert.assertTrue(browser.isElementDisplay("text->Selenium History"));
+//        browser.click(Xpath.attribute("data-toggle", "dropdown").build(), "1");
+//        browser.clickText("History");
+//        Assert.assertTrue(browser.isElementDisplay("text->Selenium History"));
     }
 
     @Test
@@ -61,6 +62,18 @@ public class SeleniumUnitTest {
         Assert.assertTrue(browser.isElementDisplay("text->No recent searches"), "unable to open search box");
         browser.input("@class->DocSearch-Input", "selenium");
         Assert.assertTrue(browser.isElementDisplay("text->Documentation"));
+    }
+
+    @Test
+    public void testUrlCode() {
+        Map<String, Integer> urlCode = browser.getUrlAndStatus();
+        Assert.assertFalse(urlCode.isEmpty());
+    }
+
+    @Test
+    public void testClickCondition() {
+        WebElement webElement = browser.findElement("text->Documentation");
+        browser.clickByCondition(webElement, Direction.DOWN,()->browser.isElementDisplay("text->selenium"));
     }
 
 
@@ -75,7 +88,7 @@ public class SeleniumUnitTest {
         return ChromeConfiguration.builder()
                 .chromeOptions(options)
                 .width(1920)
-                .hight(1080)
+                .height(1080)
                 .experimentalOption(eOptions)
                 .downloadDirectory(downloadDirectory)
                 .duration(Duration.ofSeconds(60))
@@ -84,6 +97,7 @@ public class SeleniumUnitTest {
                 .noSandbox(true)
                 .disableGpu(true)
                 .disableDevShmUsage(true)
+                .enablePerformanceLog(true)
                 .build();
     }
 

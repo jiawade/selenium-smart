@@ -1,22 +1,23 @@
-import com.google.common.collect.Lists;
 import io.smart.browser.configuration.impls.ChromeConfiguration;
-import io.smart.browser.factory.impls.SeleniumBrowserFactory;
+import io.smart.browser.factory.BrowserFactory;
+import io.smart.browser.factory.impls.SelenideBrowser;
 import io.smart.element.impls.ElementByXpath;
 import io.smart.enums.BrowserType;
-import io.smart.utils.tools.Tools;
+import io.smart.utils.tools.Helper;
 import io.smart.utils.xpath.Xpath;
+import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.devtools.v85.network.model.RequestWillBeSent;
 
 import java.io.File;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class Examples {
 
     public static void main(String[] args) {
-        SeleniumBrowserFactory factory = new SeleniumBrowserFactory().setUp(BrowserType.CHROME, buildChromeConf());
+        BrowserFactory factory = new SelenideBrowser().setUp(BrowserType.CHROME, buildChromeConf());
         ElementByXpath browser = new ElementByXpath(factory.getDriver());
         browser.get("https://www.selenium.dev/");
         browser.click("text->Documentation");
@@ -24,7 +25,9 @@ public class Examples {
         browser.click(Xpath.attribute("data-toggle", "dropdown").build(), "1");
         browser.click(1800, 30);
         browser.input("@class->DocSearch-Input", "selenium-smart");
-        Tools.sleep(3000);
+        Helper.sleep(3000);
+        browser.getLogs().forEach(System.out::println);
+        factory.getDevTools().register("Network.requestWillBeSent", RequestWillBeSent.class).getData().forEach((k, v)-> System.out.println(k+": "+v));
         browser.closeBrowser();
     }
 
@@ -41,7 +44,7 @@ public class Examples {
         return ChromeConfiguration.builder()
                 .chromeOptions(options)
                 .width(1920)
-                .hight(1080)
+                .height(1080)
                 .duration(Duration.ofSeconds(60))
                 .experimentalOption(eOptions)
                 .downloadDirectory(System.getProperty("user.dir") + File.separator + "target" + File.separator + "downloads")
@@ -49,6 +52,8 @@ public class Examples {
                 .disableGpu(true)
                 .disableExtensions(true)
                 .disableDevShmUsage(true)
+                .enablePerformanceLog(true)
+                .pageLoadStrategy(PageLoadStrategy.NONE)
                 .build();
     }
 

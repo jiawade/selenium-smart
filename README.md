@@ -2,7 +2,7 @@
 # selenium-smart #
 
 selenium-smart is an encapsulation of selenium
-based on Java8 and selenium(4.8.1)
+based on Java8 and selenium(4.8.2)
 
 ## Installation
 
@@ -11,17 +11,17 @@ based on Java8 and selenium(4.8.1)
 <dependency>
   <groupId>io.github.jiawade</groupId>
   <artifactId>selenium-smart</artifactId>
-  <version>4.8.1</version>
+  <version>4.8.2</version>
 </dependency>
 ````
 
 #### Gradle
 ````gradle
-compile 'io.github.jiawade:selenium-smart:4.7.2'
+compile 'io.github.jiawade:selenium-smart:4.8.2'
 ````
 
 #### Included Dependencies
-* selenium-java 4.8.1
+* selenium-java 4.8.2
 * webdrivermanager 5.3.1
 
 ##Xpath simple usage
@@ -53,7 +53,7 @@ example: (240,130);
 public class Examples {
 
     public static void main(String[] args) {
-        SeleniumBrowserFactory factory = new SeleniumBrowserFactory().setUp(BrowserType.CHROME, buildChromeConf());
+        SeleniumBrowser factory = new SeleniumBrowser().setUp(BrowserType.CHROME, buildChromeConf());
         ElementByXpath browser = new ElementByXpath(factory.getDriver());
         browser.get("https://www.selenium.dev/");
         browser.click("text->Documentation");

@@ -33,4 +33,6 @@ public class ChromeConfiguration extends DefaultConfiguration implements Configu
 
     public boolean disableDevShmUsage;
 
+    public boolean enablePerformanceLog;
+
 }

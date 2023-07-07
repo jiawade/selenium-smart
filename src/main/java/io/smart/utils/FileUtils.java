@@ -2,12 +2,13 @@ package io.smart.utils;
 
 
 import io.smart.exception.FileNotFoundException;
-import io.smart.exception.NotDirectoryException;
 import lombok.extern.slf4j.Slf4j;
+import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.model.ZipParameters;
 import org.apache.commons.io.filefilter.IOFileFilter;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.math.BigInteger;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -15,10 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -68,13 +66,9 @@ public class FileUtils {
 
 
     public static String readFileToString(String filePath) {
-        File file = new File(filePath);
-        if (!file.exists()) {
-            throw new FileNotFoundException("file not found: " + file);
-        }
-        String string = null;
+        String string = "";
         try {
-            string = org.apache.commons.io.FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+            string = org.apache.commons.io.FileUtils.readFileToString(new File(filePath), StandardCharsets.UTF_8);
         } catch (IOException e) {
             log.error(e.toString(), e);
         }
@@ -83,13 +77,9 @@ public class FileUtils {
 
 
     public static String readFileToString(String filePath, Charset charsets) {
-        File file = new File(filePath);
-        if (!file.exists()) {
-            throw new FileNotFoundException("file not found: " + file);
-        }
-        String string = null;
+        String string = "";
         try {
-            string = org.apache.commons.io.FileUtils.readFileToString(file, charsets);
+            string = org.apache.commons.io.FileUtils.readFileToString(new File(filePath), charsets);
         } catch (IOException e) {
             log.error(e.toString(), e);
         }
@@ -113,21 +103,16 @@ public class FileUtils {
 
 
     public static void writeStringToFile(String filePath, String string) {
-        File file = new File(filePath);
         try {
-            org.apache.commons.io.FileUtils.write(file, string, StandardCharsets.UTF_8);
+            org.apache.commons.io.FileUtils.write(new File(filePath), string, StandardCharsets.UTF_8);
         } catch (IOException e) {
             log.error(e.toString(), e);
         }
     }
 
     public static void writeStringToFile(String filePath, String string, boolean append) {
-        File file = new File(filePath);
         try {
-            if (!file.exists()) {
-                file.createNewFile();
-            }
-            org.apache.commons.io.FileUtils.write(file, string, StandardCharsets.UTF_8, append);
+            org.apache.commons.io.FileUtils.write(new File(filePath), string, StandardCharsets.UTF_8, append);
         } catch (IOException e) {
             log.error(e.toString(), e);
         }
@@ -135,36 +120,24 @@ public class FileUtils {
 
 
     public static void deleteDirectory(String directoryPath) {
-        File file = new File(directoryPath);
-        if (!file.isDirectory()) {
-            throw new NotDirectoryException("not directory: " + directoryPath);
-        }
         try {
-            org.apache.commons.io.FileUtils.deleteDirectory(file);
+            org.apache.commons.io.FileUtils.deleteDirectory(new File(directoryPath));
         } catch (IOException e) {
             log.error(e.toString(), e);
         }
     }
 
     public static void cleanDirectory(String directoryPath) {
-        File file = new File(directoryPath);
-        if (!file.isDirectory()) {
-            throw new NotDirectoryException("not directory: " + directoryPath);
-        }
         try {
-            org.apache.commons.io.FileUtils.cleanDirectory(file);
+            org.apache.commons.io.FileUtils.cleanDirectory(new File(directoryPath));
         } catch (IOException e) {
             log.error(e.toString(), e);
         }
     }
 
     public static void deleteFile(String filePath) {
-        File file = new File(filePath);
-        if (!file.exists()) {
-            throw new FileNotFoundException("file not found: " + filePath);
-        }
         try {
-            org.apache.commons.io.FileUtils.forceDelete(file);
+            org.apache.commons.io.FileUtils.forceDelete(new File(filePath));
         } catch (IOException e) {
             log.error(e.toString(), e);
         }
@@ -172,9 +145,6 @@ public class FileUtils {
 
     public static void renameFile(String fileDir, String oldName, String newName) {
         File file = new File(fileDir + "/" + oldName);
-        if (!file.exists()) {
-            throw new FileNotFoundException("file not found: " + oldName);
-        }
         try {
             org.apache.commons.io.FileUtils.moveFile(file, new File(fileDir + "/" + newName));
         } catch (IOException e) {
@@ -185,9 +155,6 @@ public class FileUtils {
     public static void contentEquals(String fileOne, String fileTwo) {
         File file1 = new File(fileOne);
         File file2 = new File(fileTwo);
-        if (!file1.exists() || !file2.exists()) {
-            throw new FileNotFoundException("file: " + fileOne + " or file: " + fileTwo + " not found");
-        }
         try {
             org.apache.commons.io.FileUtils.contentEquals(file1, file2);
         } catch (IOException e) {
@@ -198,9 +165,6 @@ public class FileUtils {
     public static void contentEquals(String fileOne, String fileTwo, String charsetName) {
         File file1 = new File(fileOne);
         File file2 = new File(fileTwo);
-        if (!file1.exists() || !file2.exists()) {
-            throw new FileNotFoundException("file: " + fileOne + " or file: " + fileTwo + " not found");
-        }
         try {
             org.apache.commons.io.FileUtils.contentEqualsIgnoreEOL(file1, file2, charsetName);
         } catch (IOException e) {
@@ -210,9 +174,6 @@ public class FileUtils {
 
     public static void moveFileToDirectory(String filePath, String newDir) {
         File file = new File(filePath);
-        if (!file.exists()) {
-            throw new FileNotFoundException("file not found: " + filePath);
-        }
         try {
             org.apache.commons.io.FileUtils.moveFileToDirectory(file, new File(newDir), true);
         } catch (IOException e) {
@@ -222,9 +183,6 @@ public class FileUtils {
 
     public static List<String> readLines(String filePath) {
         File file = new File(filePath);
-        if (!file.exists()) {
-            throw new FileNotFoundException("file not found: " + file);
-        }
         try {
             return org.apache.commons.io.FileUtils.readLines(file, StandardCharsets.UTF_8);
         } catch (IOException e) {
@@ -234,9 +192,6 @@ public class FileUtils {
 
     public static List<String> readLines(String filePath, Charset charset) {
         File file = new File(filePath);
-        if (!file.exists()) {
-            throw new FileNotFoundException("file not found: " + file);
-        }
         try {
             return org.apache.commons.io.FileUtils.readLines(file, charset);
         } catch (IOException e) {
@@ -277,4 +232,28 @@ public class FileUtils {
     public static BigInteger sizeOfDirectory(String file) {
         return org.apache.commons.io.FileUtils.sizeOfDirectoryAsBigInteger(new File(file));
     }
+
+    public static void unzipFile(File file, String destinationDir) {
+        log.info("uncompressing file: {} to the directory: {}", file, destinationDir);
+        try {
+            ZipFile zipFile = new ZipFile(file);
+            zipFile.extractAll(destinationDir);
+        } catch (ZipException e) {
+            log.error(e.toString(), e);
+        }
+    }
+
+    public static void unzipFile(File file, String destinationDir, String password) {
+        log.info("uncompressing file: {} to the directory: {}", file, destinationDir);
+        try {
+            ZipFile zipFile = new ZipFile(file);
+            if (zipFile.isEncrypted()) {
+                zipFile.setPassword(password);
+            }
+            zipFile.extractAll(destinationDir);
+        } catch (ZipException e) {
+            log.error(e.toString(), e);
+        }
+    }
+
 }

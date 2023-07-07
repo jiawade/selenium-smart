@@ -8,6 +8,7 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.openqa.selenium.firefox.FirefoxDriverService;
 import org.openqa.selenium.firefox.FirefoxOptions;
+import org.openqa.selenium.firefox.FirefoxProfile;
 
 
 @ToString
@@ -27,4 +28,6 @@ public class FireFoxConfiguration extends DefaultConfiguration implements Config
     public boolean disableExtensions;
 
     public boolean disableDevShmUsage;
+
+    public FirefoxProfile firefoxProfile;
 }

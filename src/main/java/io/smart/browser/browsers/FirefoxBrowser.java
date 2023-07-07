@@ -25,7 +25,7 @@ public class FirefoxBrowser extends Browser {
         FireFoxConfiguration conf = FireFoxConfiguration.builder()
                 .duration(Duration.ofSeconds(60))
                 .width(1920)
-                .hight(1080)
+                .height(1080)
                 .headless(false)
                 .firefoxOptions(new FirefoxOptions())
                 .build();
@@ -94,6 +94,15 @@ public class FirefoxBrowser extends Browser {
         if (!Objects.isNull(conf.getDesiredCapabilities())){
             conf.getDesiredCapabilities().setCapability(ChromeOptions.CAPABILITY, options);
         }
+        if (!Objects.isNull(conf.getFirefoxProfile())){
+            options.setProfile(conf.getFirefoxProfile());
+        }
+        if (!Objects.isNull(conf.getPageLoadStrategy())) {
+            options.setPageLoadStrategy(conf.getPageLoadStrategy());
+        }
+        if (!Objects.isNull(conf.getProxy())) {
+            options.setProxy(conf.getProxy());
+        }
         FirefoxDriver driver;
         if (!Objects.isNull(conf.getFirefoxDriverService())){
             driver= new FirefoxDriver(conf.getFirefoxDriverService(),options);
@@ -101,7 +110,7 @@ public class FirefoxBrowser extends Browser {
             driver=new FirefoxDriver(options);
         }
         driver.manage().timeouts().pageLoadTimeout(conf.getDuration());
-        driver.manage().window().setSize(new Dimension(conf.getWidth(), conf.getHight()));
+        driver.manage().window().setSize(new Dimension(conf.getWidth(), conf.getHeight()));
         if (conf.maximizeWindow) {
             driver.manage().window().maximize();
         }

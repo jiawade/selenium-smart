@@ -4,12 +4,14 @@ import io.smart.driver.DriverOperation;
 import io.smart.element.PortalOperator;
 import io.smart.enums.Direction;
 import io.smart.enums.Position;
+import io.smart.function.ExpectedCondition;
 import io.smart.function.Operator;
 import io.smart.utils.tools.ColorUtils;
-import io.smart.utils.tools.Tools;
+import io.smart.utils.tools.Helper;
 import io.smart.utils.xpath.XpathBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.Color;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -17,10 +19,10 @@ import org.openqa.selenium.support.ui.FluentWait;
 
 import java.io.File;
 import java.time.Duration;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static io.smart.enums.Direction.*;
 
 @Slf4j
 public class ElementByXpath extends DriverOperation implements PortalOperator {
@@ -94,6 +96,29 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         before.apply();
         click(xPoint, yPoint);
         after.apply();
+    }
+
+    public void clickAnyOf(List<String> texts) {
+        if (texts.isEmpty()) {
+            throw new IllegalArgumentException("element size must greater than 0");
+        }
+        List<String> canBeClick = new ArrayList<>();
+        int counter = 0;
+        while (canBeClick.size() == 0 && counter < secondTimeout * 10 / texts.size()) {
+            for (String i : texts) {
+                String xpath = XpathBuilder.xpathGenerator(i);
+                boolean canClick = isElementClickableOfMillis(xpath, 100);
+                if (canClick) {
+                    canBeClick.add(xpath);
+                }
+            }
+            counter += 1;
+        }
+        if (canBeClick.size() > 0) {
+            click(canBeClick.get(0));
+        } else {
+            throw new IllegalArgumentException("all elements are not clickable");
+        }
     }
 
     public void rightClick() {
@@ -178,44 +203,77 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
     }
 
     public List<String> getTexts(String text) {
-        List<WebElement> webElements = findElements(text);
-        List<String> texts = new LinkedList<>();
-        webElements.forEach(i -> {
-            try {
-                texts.add(i.getText());
-            } catch (WebDriverException e) {
-            }
-        });
-        return texts;
+        List<WebElement> elements = findElements(text);
+        return elements.stream().map(WebElement::getText).collect(Collectors.toList());
     }
 
     public List<String> getTexts(List<WebElement> elements) {
-        List<String> texts = new LinkedList<>();
-        elements.forEach(i -> {
-            try {
-                texts.add(i.getText());
-            } catch (WebDriverException e) {
-            }
-        });
-        return texts;
+        return elements.stream().map(WebElement::getText).collect(Collectors.toList());
     }
 
     public List<String> getTexts(String text, int secondTimeOut) {
-        List<WebElement> webElements = findElements(text, secondTimeOut);
-        List<String> texts = new LinkedList<>();
-        webElements.forEach(i -> {
-            try {
-                texts.add(i.getText());
-            } catch (WebDriverException e) {
+        List<WebElement> elements = findElements(text, secondTimeOut);
+        return elements.stream().map(WebElement::getText).collect(Collectors.toList());
+    }
+
+    public List<String> getAllTexts() {
+        return Arrays.stream(findElement("//html/body").getText().split("\n")).collect(Collectors.toList());
+    }
+
+    public boolean isAllTextsDisplay(Set<String> texts) {
+        final long finishAtMillis = System.currentTimeMillis() + (secondTimeout * 1000L);
+        boolean wasInterrupted = false;
+        try {
+            while (!getAllTexts().containsAll(texts)) {
+                final long remainingMillis = finishAtMillis - System.currentTimeMillis();
+                if (remainingMillis < 0) {
+                    return false;
+                }
+                try {
+                    Thread.sleep(Math.min(100, remainingMillis));
+                } catch (final InterruptedException ignore) {
+                    wasInterrupted = true;
+                } catch (final Exception ex) {
+                    break;
+                }
             }
-        });
-        return texts;
+        } finally {
+            if (wasInterrupted) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        return true;
+    }
+
+    public boolean isAllTextsDisplay(Set<String> texts, int secondTimeout) {
+        final long finishAtMillis = System.currentTimeMillis() + (secondTimeout * 1000L);
+        boolean wasInterrupted = false;
+        try {
+            while (!getAllTexts().containsAll(texts)) {
+                final long remainingMillis = finishAtMillis - System.currentTimeMillis();
+                if (remainingMillis < 0) {
+                    return false;
+                }
+                try {
+                    Thread.sleep(Math.min(100, remainingMillis));
+                } catch (final InterruptedException ignore) {
+                    wasInterrupted = true;
+                } catch (final Exception ex) {
+                    break;
+                }
+            }
+        } finally {
+            if (wasInterrupted) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        return true;
     }
 
     public void clickXYBesidesText(int pixel, Direction direction, String xpath) {
         List<WebElement> element = findElements(xpath);
         if (element.size() > 1) {
-            throw new WebDriverException("found more then one element by xpath: " + xpath);
+            throw new WebDriverException("found more than one element by xpath: " + xpath);
         }
         Dimension dimension = element.get(0).getSize();
         Actions action = new Actions(driver);
@@ -237,8 +295,55 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         action.click().build().perform();
     }
 
+    public void clickByCondition(WebElement sourceElement, Direction direction, ExpectedCondition condition) {
+        int width = getElementSize(sourceElement).first();
+        int height = getElementSize(sourceElement).second();
+        int XPoint = getElementLocation(sourceElement).first();
+        int YPoint = getElementLocation(sourceElement).second();
+        int pageWidth = getPageSize().first();
+        int pageHeight = getPageSize().second();
+
+        if (direction.equals(RIGHT)) {
+            int tempOffset = XPoint + width / 2;
+            while (tempOffset <= pageWidth) {
+                click(tempOffset, YPoint);
+                if (condition.meet()) {
+                    break;
+                }
+                tempOffset += 4;
+            }
+        } else if (direction.equals(LEFT)) {
+            int tempOffset = XPoint - width / 2;
+            while (tempOffset >= 0) {
+                click(tempOffset, YPoint);
+                if (condition.meet()) {
+                    break;
+                }
+                tempOffset -= 4;
+            }
+        } else if (direction.equals(UP)) {
+            int tempOffset = YPoint - height / 2;
+            while (tempOffset >= 0) {
+                click(XPoint, tempOffset);
+                if (condition.meet()) {
+                    break;
+                }
+                tempOffset += 4;
+            }
+        } else if (direction.equals(DOWN)) {
+            int tempOffset = YPoint + height / 2;
+            while (tempOffset <= pageHeight) {
+                click(XPoint, tempOffset);
+                if (condition.meet()) {
+                    break;
+                }
+                tempOffset += 4;
+            }
+        }
+    }
+
     public void input(String xpath, String text) {
-        log.info("inputing text: \"{}\"", text);
+        log.info("inputting text: \"{}\"", text);
         WebElement element = findElement(xpath);
         if (!isElementClickableOfMillis(element, 1000)) {
             element = findClickableElement(xpath);
@@ -249,19 +354,19 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
     }
 
     public void input(WebElement element, String text) {
-        log.info("inputing text: \"{}\" into element: \"{}\"", text, getFindBy(element));
+        log.info("inputting text: \"{}\" into element: \"{}\"", text, getFindBy(element));
         for (char i : text.toCharArray()) {
             element.sendKeys(String.valueOf(i));
         }
     }
 
     public void input(String xpath, Keys keys) {
-        log.info("inputing text: \"{}\" into element: \"{}\"", keys.toString(), xpath);
+        log.info("inputting text: \"{}\" into element: \"{}\"", keys.toString(), xpath);
         findElement(xpath).sendKeys(keys);
     }
 
     public void input(String text, int xPoint, int yPoint) {
-        log.info("inputing text: \"{}\" into element coordinate: \"({}, {})\"", text, xPoint, yPoint);
+        log.info("inputting text: \"{}\" into element coordinate: \"({}, {})\"", text, xPoint, yPoint);
         action(xPoint, yPoint).moveByOffset(nextXPoint, nextYpoint).sendKeys(text).build().perform();
     }
 
@@ -520,7 +625,7 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
                 try {
                     action(i).moveToElement(i).build().perform();
                 } catch (WebDriverException ignore) {
-                    Tools.sleep(2000);
+                    Helper.sleep(2000);
                 }
             }
         }
@@ -596,7 +701,7 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
     }
 
     public boolean isElementExist(String text) {
-        return isElementDisplay(text, secondTimeout);
+        return isElementExist(text, secondTimeout);
     }
 
     public boolean isElementExist(String text, int secondTimeout) {
@@ -775,19 +880,19 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         click(text(text), index);
     }
 
-    public void clickPositionByBesidesText(int pixel, Direction direction, String xpath) {
+    public void clickByOffset(int pixel, Direction direction, String xpath) {
         switch (direction) {
             case UP:
-                clickXYBesidesText(pixel, Direction.UP, xpath);
+                clickXYBesidesText(pixel, UP, xpath);
                 break;
             case DOWN:
                 clickXYBesidesText(pixel, Direction.DOWN, xpath);
                 break;
             case RIGHT:
-                clickXYBesidesText(pixel, Direction.RIGHT, xpath);
+                clickXYBesidesText(pixel, RIGHT, xpath);
                 break;
             case LEFT:
-                clickXYBesidesText(pixel, Direction.LEFT, xpath);
+                clickXYBesidesText(pixel, LEFT, xpath);
                 break;
             default:
                 throw new IllegalArgumentException("unsupported direction type: " + direction);
@@ -843,36 +948,36 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
     }
 
     class Table {
-        String lastXpathModle = "//*[text()=\"%s\"]/ancestor::tr/td[%s]";
-        String rowColumModel = "//*[text()=\"%s\"]/ancestor::tr/td[count(//table//thead//*[text()=\"%s\"]/ancestor::th//preceding-sibling::*)]";
-        String specificColumText = "//table//td[count((//table//*[text()=\"%s\"])[last()]/ancestor-or-self::th/preceding-sibling::*) +%s]";
+        String lastXpathModel = "//*[text()=\"%s\"]/ancestor::tr/td[%s]";
+        String rowColumnModel = "//*[text()=\"%s\"]/ancestor::tr/td[count(//table//thead//*[text()=\"%s\"]/ancestor::th//preceding-sibling::*)]";
+        String specificColumnText = "//table//td[count((//table//*[text()=\"%s\"])[last()]/ancestor-or-self::th/preceding-sibling::*) +%s]";
 
         WebElement getLastColByRowText(String text) {
-            return findElement(String.format(lastXpathModle, text, "last()"));
+            return findElement(String.format(lastXpathModel, text, "last()"));
         }
 
         WebElement getLastColByRowText(String text, String targetTextSuffix) {
-            return findElement(String.format(lastXpathModle + targetTextSuffix, text, "last()"));
+            return findElement(String.format(lastXpathModel + targetTextSuffix, text, "last()"));
         }
 
         WebElement getLastColByRowTextWithIndex(String text, String index) {
-            return findElement(String.format(lastXpathModle, text, index));
+            return findElement(String.format(lastXpathModel, text, index));
         }
 
         WebElement getByRowColum(String row, String column) {
-            return findElement(String.format(rowColumModel, row, column));
+            return findElement(String.format(rowColumnModel, row, column));
         }
 
         WebElement getByRowColum(String row, String column, String targetElementSuffix) {
-            return findElement(String.format(rowColumModel + targetElementSuffix, row, column));
+            return findElement(String.format(rowColumnModel + targetElementSuffix, row, column));
         }
 
         List<WebElement> getByColum(String column) {
-            return findElements(String.format(specificColumText, column, 1));
+            return findElements(String.format(specificColumnText, column, 1));
         }
 
         List<WebElement> getByColum(String column, String index) {
-            return findElements(String.format(specificColumText, column, index));
+            return findElements(String.format(specificColumnText, column, index));
         }
     }
 

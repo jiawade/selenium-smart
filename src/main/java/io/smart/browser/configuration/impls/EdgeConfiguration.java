@@ -32,4 +32,6 @@ public class EdgeConfiguration extends DefaultConfiguration implements Configura
     public boolean disableExtensions;
 
     public boolean disableDevShmUsage;
+
+    public boolean enablePerformanceLog;
 }

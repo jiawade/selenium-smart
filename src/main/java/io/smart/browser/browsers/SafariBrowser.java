@@ -15,7 +15,7 @@ import java.time.Duration;
 import java.util.Objects;
 
 @Slf4j
-public class SafariBrowser extends Browser{
+public class SafariBrowser extends Browser {
 
     public SafariBrowser() {
     }
@@ -25,7 +25,7 @@ public class SafariBrowser extends Browser{
         SafariConfiguration conf = SafariConfiguration.builder()
                 .duration(Duration.ofSeconds(60))
                 .width(1920)
-                .hight(1080)
+                .height(1080)
                 .headless(false)
                 .safariOptions(new SafariOptions())
                 .build();
@@ -49,18 +49,13 @@ public class SafariBrowser extends Browser{
     }
 
     private SafariDriver getDriver(SafariConfiguration conf, SafariOptions options) {
-        if (!Objects.isNull(conf.getDriverPath())) {
-            if (new File(conf.getDriverPath()).exists()) {
-                System.setProperty("webdriver.edge.driver", conf.getDriverPath());
-            } else {
-                log.warn("edge driver does not exist: {}", conf.getDriverPath());
-            }
-        } else {
-            log.info("auto configure browser driver");
-            WebDriverManager.safaridriver().setup();
-        }
+        log.info("auto configure browser driver");
+        WebDriverManager.safaridriver().setup();
         if (!Objects.isNull(conf.getDesiredCapabilities())) {
             conf.getDesiredCapabilities().setCapability(ChromeOptions.CAPABILITY, options);
+        }
+        if (!Objects.isNull(conf.getPageLoadStrategy())) {
+            options.setPageLoadStrategy(conf.getPageLoadStrategy());
         }
         SafariDriver driver;
         if (!Objects.isNull(conf.getSafariDriverService())) {
@@ -69,7 +64,7 @@ public class SafariBrowser extends Browser{
             driver = new SafariDriver(options);
         }
         driver.manage().timeouts().pageLoadTimeout(conf.getDuration());
-        driver.manage().window().setSize(new Dimension(conf.getWidth(), conf.getHight()));
+        driver.manage().window().setSize(new Dimension(conf.getWidth(), conf.getHeight()));
         if (conf.maximizeWindow) {
             driver.manage().window().maximize();
         }
