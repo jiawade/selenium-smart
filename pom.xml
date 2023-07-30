@@ -6,7 +6,7 @@
 
     <groupId>io.github.jiawade</groupId>
     <artifactId>selenium-smart</artifactId>
-    <version>4.8.2</version>
+    <version>4.9.0</version>
 
     <name>selenium-smart</name>
     <description>easy use for selenium</description>

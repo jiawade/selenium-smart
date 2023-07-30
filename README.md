@@ -11,13 +11,13 @@ based on Java8 and selenium(4.8.2)
 <dependency>
   <groupId>io.github.jiawade</groupId>
   <artifactId>selenium-smart</artifactId>
-  <version>4.8.2</version>
+  <version>4.9.0</version>
 </dependency>
 ````
 
 #### Gradle
 ````gradle
-compile 'io.github.jiawade:selenium-smart:4.8.2'
+compile 'io.github.jiawade:selenium-smart:4.9.0'
 ````
 
 #### Included Dependencies
@@ -75,7 +75,7 @@ public class Examples {
         return ChromeConfiguration.builder()
                 .chromeOptions(options)
                 .width(1920)
-                .hight(1080)
+                .height(1080)
                 .duration(Duration.ofSeconds(60))
                 .build();
     }
