@@ -81,6 +81,11 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         }
     }
 
+    public void click(Point point) {
+        log.info("clicking coordinate: ({}, {})", point.getX(), point.getY());
+        action(point.getX(), point.getY()).moveByOffset(nextXPoint, nextYpoint).click().build().perform();
+    }
+
     public void click(int xPoint, int yPoint) {
         log.info("clicking coordinate: ({}, {})", xPoint, yPoint);
         action(xPoint, yPoint).moveByOffset(nextXPoint, nextYpoint).click().build().perform();
@@ -96,6 +101,17 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         before.apply();
         click(xPoint, yPoint);
         after.apply();
+    }
+
+    public void clickAny(Map<String, Operator> condition) {
+        for (int i = 1; i < 30; i++) {
+            for (Map.Entry<String, Operator> key : condition.entrySet()) {
+                String xpath = XpathBuilder.xpathGenerator(key.getKey());
+                if (isElementDisplay(xpath, 1)) {
+                    key.getValue().apply();
+                }
+            }
+        }
     }
 
     public void clickAnyOf(List<String> texts) {
@@ -166,7 +182,7 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
     }
 
     public void jsClick(WebElement element) {
-        log.warn("clicking element\"{}\" by javascript", getFindBy(element));
+        log.warn("clicking element: \"{}\" by javascript", getFindBy(element));
         js.executeScript("arguments[0].click();", element);
     }
 
@@ -218,6 +234,42 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
 
     public List<String> getAllTexts() {
         return Arrays.stream(findElement("//html/body").getText().split("\n")).collect(Collectors.toList());
+    }
+
+    public Boolean isAnyTextsDisplay(Set<String> texts) {
+        List<String> list = new ArrayList<>(texts);
+        int counter = 1;
+        for (String s : list) {
+            String value = XpathBuilder.xpathGenerator(s);
+            boolean ready = isElementDisplay(value, 1);
+            if (ready) {
+                return true;
+            } else {
+                counter += 1;
+            }
+            if (counter == 30) {
+                break;
+            }
+        }
+        return false;
+    }
+
+    public Boolean isAnyTextsDisplay(Set<String> texts, int secondTimeout) {
+        List<String> list = new ArrayList<>(texts);
+        int counter = 1;
+        for (String s : list) {
+            String value = XpathBuilder.xpathGenerator(s);
+            boolean ready = isElementDisplay(value, 1);
+            if (ready) {
+                return true;
+            } else {
+                counter += 1;
+            }
+            if (counter == secondTimeout) {
+                break;
+            }
+        }
+        return false;
     }
 
     public boolean isAllTextsDisplay(Set<String> texts) {
@@ -450,6 +502,24 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
                 .get(0);
     }
 
+    public List<WebElement> findElementsContains(String text) {
+        String value = XpathBuilder.xpathContainsGenerator(text);
+        return executeFindElements(value, secondTimeout)
+                .orElseThrow(() -> new NoSuchElementException("unable to find the element: \"" + value + "\" within " + secondTimeout + " seconds"));
+    }
+
+    public List<WebElement> findElementsContains(String text, int secondTimeout) {
+        String value = XpathBuilder.xpathContainsGenerator(text);
+        return executeFindElements(value, secondTimeout)
+                .orElseThrow(() -> new NoSuchElementException("unable to find the element: \"" + value + "\" within " + secondTimeout + " seconds"));
+    }
+
+    public List<WebElement> findElementsContains(String text, String index, int secondTimeout) {
+        String value = XpathBuilder.xpathContainsGenerator(text, index);
+        return executeFindElements(value, secondTimeout)
+                .orElseThrow(() -> new NoSuchElementException("unable to find the element: \"" + value + "\" within " + secondTimeout + " seconds"));
+    }
+
     public List<WebElement> findElements(String text) {
         String value = XpathBuilder.xpathGenerator(text);
         return executeFindElements(value, secondTimeout)
@@ -679,25 +749,40 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
     }
 
     public void scrollToTop() {
+        log.info("scroll to top");
         JavascriptExecutor js = (JavascriptExecutor) driver;
         js.executeScript("window.scrollTo(0,0)");
     }
 
     public void scrollToBottom() {
+        log.info("scroll to bottom");
         JavascriptExecutor js = (JavascriptExecutor) driver;
-        js.executeScript("window.scrollTo(0,document.body.scrollyPoint)");
+        js.executeScript("window.scrollTo(0,document.body.scrollHeight)");
     }
 
     public void scrollToLeft() {
+        log.info("scroll to left");
         js.executeScript("window.scroll(-500000, 0)");
     }
 
     public void scrollToRight() {
+        log.info("scroll to right");
         js.executeScript("window.scroll(500000, 0)");
     }
 
-    public void scrollToElement(String text) {
+    public void scrollElementToView(String text) {
+        log.info("scroll element: {} to view", text);
         js.executeScript("arguments[0].scrollIntoView(true);", findElement(text));
+    }
+
+    public void scrollElementToView(WebElement element) {
+        log.info("scroll bar to element: {}", getFindBy(element));
+        js.executeScript("arguments[0].scrollIntoView();", element);
+    }
+
+    public void scrollBy(long xPixel, long yPixel) {
+        log.info("scroll bar by: {}, {}", xPixel, yPixel);
+        js.executeScript(String.format("window.scrollBy(%s,%s)", xPixel, yPixel));
     }
 
     public boolean isElementExist(String text) {
@@ -706,7 +791,7 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
 
     public boolean isElementExist(String text, int secondTimeout) {
         String xpath = XpathBuilder.xpathGenerator(text);
-        log.info("checking presence of the element: \"{}\" within {} seconds", xpath, secondTimeout);
+        log.debug("checking presence of the element: \"{}\" within {} seconds", xpath, secondTimeout);
         boolean flag;
         try {
             FluentWait<WebDriver> wait = new FluentWait<>(driver)
@@ -834,11 +919,17 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
     }
 
     public String getTagAllAttributes(String text) {
-        Object attr = js.executeScript("var items = {}; " +
-                "for (index = 0; index < arguments[0].attributes.length; ++index) " +
-                "{ items[arguments[0].attributes[index].name] = arguments[0].attributes[index].value }; " +
-                "return items;", driver.findElement(By.xpath(text)));
-        return attr.toString();
+        String attr = "";
+        try {
+            Object re = js.executeScript("var items = {}; " +
+                    "for (index = 0; index < arguments[0].attributes.length; ++index) " +
+                    "{ items[arguments[0].attributes[index].name] = arguments[0].attributes[index].value }; " +
+                    "return items;", findElement(text));
+            attr = re.toString();
+        } catch (WebDriverException e) {
+            log.warn(e.toString(), e);
+        }
+        return attr;
     }
 
     public boolean isElementEnabled(String text) {
@@ -876,11 +967,20 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         click(text(text));
     }
 
+    public void clickAttribute(String key, String value) {
+        click(String.format("@%s->%s", key, value));
+    }
+
+    public void clickAttributeContain(String key, String value) {
+        click(XpathBuilder.xpathContainsGenerator(String.format("@%s->%s", key, value)));
+    }
+
     public void clickTextWithIndex(String text, String index) {
         click(text(text), index);
     }
 
     public void clickByOffset(int pixel, Direction direction, String xpath) {
+        log.info("clicking by direction: {} and offset: {}, by {}", direction, pixel, xpath);
         switch (direction) {
             case UP:
                 clickXYBesidesText(pixel, UP, xpath);
@@ -1015,18 +1115,24 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
         return "text->" + text.replace("\"", "");
     }
 
-    private String getAbsoluteXPath(WebElement element) {
-        return (String) js.executeScript(
-                "getXPath=function(node)" + "{" + "if (node.id !== '')" + "{" +
-                        "return '//' + node.tagName.toLowerCase() + '[@id=\"' + node.id + '\"]'" + "}" +
-                        "if (node === document.body)" + "{" + "return node.tagName.toLowerCase()" + "}" +
-                        "var nodeCount = 0;" + "var childNodes = node.parentNode.childNodes;" +
-                        "for (var i=0; i<childNodes.length; i++)" + "{" + "var currentNode = childNodes[i];" +
-                        "if (currentNode === node)" + "{" +
-                        "return getXPath(node.parentNode) + '/' + node.tagName.toLowerCase() + '[' + (nodeCount+1) + ']'" + "}" +
-                        "if (currentNode.nodeType === 1 && " +
-                        "currentNode.tagName.toLowerCase() === node.tagName.toLowerCase())" + "{" + "nodeCount++" + "}" + "}" + "};" +
-                        "return getXPath(arguments[0]);", element);
+    public String getAbsoluteXPath(WebElement element) {
+        String xpath = "";
+        try {
+            xpath = (String) js.executeScript(
+                    "getXPath=function(node)" + "{" + "if (node.id !== '')" + "{" +
+                            "return '//' + node.tagName.toLowerCase() + '[@id=\"' + node.id + '\"]'" + "}" +
+                            "if (node === document.body)" + "{" + "return node.tagName.toLowerCase()" + "}" +
+                            "var nodeCount = 0;" + "var childNodes = node.parentNode.childNodes;" +
+                            "for (var i=0; i<childNodes.length; i++)" + "{" + "var currentNode = childNodes[i];" +
+                            "if (currentNode === node)" + "{" +
+                            "return getXPath(node.parentNode) + '/' + node.tagName.toLowerCase() + '[' + (nodeCount+1) + ']'" + "}" +
+                            "if (currentNode.nodeType === 1 && " +
+                            "currentNode.tagName.toLowerCase() === node.tagName.toLowerCase())" + "{" + "nodeCount++" + "}" + "}" + "};" +
+                            "return getXPath(arguments[0]);", element);
+        } catch (WebDriverException e) {
+            log.error(e.toString(), e);
+        }
+        return xpath;
     }
 
     private String getFindBy(WebElement element) {
@@ -1057,7 +1163,9 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
             } else {
                 log.warn("all elements are not clickable, the number of the element: \"{}\" is: {}, will click on it one by one", xpath, allElements.size());
                 highlightElement(allElements);
-                allElements.forEach(this::jsClick);
+                allElements.forEach(i -> {
+                    click(i.getLocation());
+                });
             }
         }
     }
@@ -1079,7 +1187,9 @@ public class ElementByXpath extends DriverOperation implements PortalOperator {
             } else {
                 log.warn("all elements are not clickable, the number of the element: \"{}\" is: {}, will click on it one by one", xpath, allElements.size());
                 highlightElement(allElements);
-                allElements.forEach(this::jsClick);
+                allElements.forEach(i -> {
+                    click(i.getLocation());
+                });
             }
         }
     }

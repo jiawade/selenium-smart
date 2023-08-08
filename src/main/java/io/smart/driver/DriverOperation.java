@@ -65,11 +65,18 @@ public class DriverOperation {
     }
 
     public void closeBrowser() {
+        log.info("quit browser");
         driver.quit();
     }
 
-    public void closeBrowserTab() {
+    public void closeCurrentBrowserTab() {
+        log.info("close current tab");
         driver.close();
+    }
+
+    public void quit() {
+        log.info("quit browser");
+        driver.quit();
     }
 
     public String getPageSource() {
@@ -131,8 +138,44 @@ public class DriverOperation {
     }
 
     public void switchToBrowserTab(int index) {
-        ArrayList<String> tabs = new ArrayList<>(driver.getWindowHandles());
-        driver.switchTo().window(tabs.get(index));
+        log.info("switching to browser tab to: {}", index);
+        final long finishAtMillis = System.currentTimeMillis() + (secondTimeout * 1000L);
+        boolean wasInterrupted = false;
+        boolean success = true;
+        try {
+            while (!switchBrowser(index)) {
+                final long remainingMillis = finishAtMillis - System.currentTimeMillis();
+                if (remainingMillis < 0) {
+                    success = false;
+                }
+                try {
+                    Thread.sleep(Math.min(100, remainingMillis));
+                } catch (final InterruptedException ignore) {
+                    wasInterrupted = true;
+                } catch (final Exception ex) {
+                    break;
+                }
+            }
+        } finally {
+            if (wasInterrupted) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        if (!success) {
+            ArrayList<String> tabs = new ArrayList<>(driver.getWindowHandles());
+            driver.switchTo().window(tabs.get(index));
+        }
+    }
+
+    private boolean switchBrowser(int index) {
+        try {
+            ArrayList<String> tabs = new ArrayList<>(driver.getWindowHandles());
+            driver.switchTo().window(tabs.get(index));
+            return true;
+        } catch (IndexOutOfBoundsException e) {
+            log.debug(e.toString(), e);
+            return false;
+        }
     }
 
     public boolean setWindowSize(int width, int height) {

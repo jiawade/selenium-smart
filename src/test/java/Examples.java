@@ -1,6 +1,7 @@
 import io.smart.browser.configuration.impls.ChromeConfiguration;
 import io.smart.browser.factory.BrowserFactory;
 import io.smart.browser.factory.impls.SelenideBrowser;
+import io.smart.browser.factory.impls.SeleniumBrowser;
 import io.smart.element.impls.ElementByXpath;
 import io.smart.enums.BrowserType;
 import io.smart.utils.tools.Helper;
@@ -17,7 +18,7 @@ import java.util.Map;
 public class Examples {
 
     public static void main(String[] args) {
-        BrowserFactory factory = new SelenideBrowser().setUp(BrowserType.CHROME, buildChromeConf());
+        BrowserFactory factory = new SeleniumBrowser().setUp(BrowserType.CHROME, buildChromeConf());
         ElementByXpath browser = new ElementByXpath(factory.getDriver());
         browser.get("https://www.selenium.dev/");
         browser.click("text->Documentation");

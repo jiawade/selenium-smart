@@ -11,18 +11,17 @@ based on Java8 and selenium(4.8.2)
 <dependency>
   <groupId>io.github.jiawade</groupId>
   <artifactId>selenium-smart</artifactId>
-  <version>4.9.0</version>
+  <version>4.9.0.1</version>
 </dependency>
 ````
 
 #### Gradle
 ````gradle
-compile 'io.github.jiawade:selenium-smart:4.9.0'
+compile 'io.github.jiawade:selenium-smart:4.9.0.1'
 ````
 
 #### Included Dependencies
 * selenium-java 4.8.2
-* webdrivermanager 5.3.1
 
 ##Xpath simple usage
 
