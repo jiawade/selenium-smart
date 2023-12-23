@@ -32,10 +32,10 @@ public class FirefoxBrowser extends Browser {
         FirefoxOptions options = conf.getFirefoxOptions();
         log.debug("current system platform is: " + platform);
         if (platform.equals(SystemType.Linux)) {
-            options.setHeadless(true);
+            options.addArguments("--headless=new");
         } else if (platform.equals(SystemType.Windows) || platform.equals(SystemType.Mac)) {
             if (headless) {
-                options.setHeadless(true);
+                options.addArguments("--headless=new");
             }
         } else {
             throw new IllegalArgumentException("unsupported platform type: " + platform);
@@ -50,10 +50,10 @@ public class FirefoxBrowser extends Browser {
         FirefoxOptions options = conf.getFirefoxOptions();
         log.debug("current system platform is: " + platform);
         if (platform.equals(SystemType.Linux)) {
-            options.setHeadless(true);
+            options.addArguments("--headless=new");
         } else if (platform.equals(SystemType.Windows) || platform.equals(SystemType.Mac)) {
             if (conf.headless) {
-                options.setHeadless(true);
+                options.addArguments("--headless=new");
             }
         } else {
             throw new IllegalArgumentException("unsupported platform type: " + platform);

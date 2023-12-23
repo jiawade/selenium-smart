@@ -38,9 +38,9 @@ public class EdgeBrowser extends Browser {
         EdgeOptions options = conf.getEdgeOptions();
         log.debug("current system platform is: " + platform);
         if (platform.equals(SystemType.Linux)) {
-            options.setHeadless(true);
+            options.addArguments("--headless=new");
         } else if (platform.equals(SystemType.Windows) || platform.equals(SystemType.Mac)) {
-            if (headless) options.setHeadless(true);
+            if (headless) options.addArguments("--headless=new");
         } else {
             throw new IllegalArgumentException("unsupported platform type: " + platform);
         }
@@ -53,9 +53,9 @@ public class EdgeBrowser extends Browser {
         EdgeOptions options = conf.getEdgeOptions();
         log.debug("current system platform is: " + platform);
         if (platform.equals(SystemType.Linux)) {
-            options.setHeadless(true);
+            options.addArguments("--headless=new");
         } else if (platform.equals(SystemType.Windows) || platform.equals(SystemType.Mac)) {
-            if (conf.headless) options.setHeadless(true);
+            if (conf.headless)  options.addArguments("--headless=new");
         } else {
             throw new IllegalArgumentException("unsupported platform type: " + platform);
         }
@@ -78,7 +78,6 @@ public class EdgeBrowser extends Browser {
         if (conf.enablePerformanceLog){
             LoggingPreferences logPrefs = new LoggingPreferences();
             logPrefs.enable(LogType.PERFORMANCE, Level.ALL);
-            options.setCapability("enableNetwork", true);
             options.setCapability(CapabilityType.ACCEPT_INSECURE_CERTS, true);
             options.setCapability("ms:loggingPrefs", logPrefs);
         }

@@ -1,6 +1,5 @@
 import io.smart.browser.configuration.impls.ChromeConfiguration;
 import io.smart.browser.factory.BrowserFactory;
-import io.smart.browser.factory.impls.SelenideBrowser;
 import io.smart.browser.factory.impls.SeleniumBrowser;
 import io.smart.element.impls.ElementByXpath;
 import io.smart.enums.BrowserType;
