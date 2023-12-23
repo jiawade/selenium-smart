@@ -6,7 +6,7 @@
 
     <groupId>io.github.jiawade</groupId>
     <artifactId>selenium-smart</artifactId>
-    <version>4.9.0</version>
+    <version>4.9.1</version>
 
     <name>selenium-smart</name>
     <description>easy use for selenium</description>
@@ -84,11 +84,6 @@
             <groupId>net.lingala.zip4j</groupId>
             <artifactId>zip4j</artifactId>
             <version>1.3.2</version>
-        </dependency>
-        <dependency>
-            <groupId>io.github.jiawade</groupId>
-            <artifactId>auto-webdriver</artifactId>
-            <version>0.0.3</version>
         </dependency>
         <dependency>
             <groupId>org.testng</groupId>
